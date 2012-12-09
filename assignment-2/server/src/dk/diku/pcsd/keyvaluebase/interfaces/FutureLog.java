@@ -14,9 +14,10 @@ public class FutureLog<T> implements Future<T> {
 	@Override
 	public T get(long arg0, TimeUnit arg1) throws InterruptedException,
 			ExecutionException, TimeoutException {
-
+		
 		synchronized(this.lock) {
-			this.lock.wait(arg0);
+			if (!this.done)
+				this.lock.wait(arg1.toMillis(arg0));
 		}
 		return ret;
 	}
@@ -24,7 +25,8 @@ public class FutureLog<T> implements Future<T> {
 	@Override
 	public T get() throws InterruptedException, ExecutionException {
 		synchronized(this.lock) {
-			this.lock.wait();
+			if (!this.done)
+				this.lock.wait();
 		}
 		return ret;
 	}
@@ -32,8 +34,8 @@ public class FutureLog<T> implements Future<T> {
 	public void signalAll(T ret) {
 		synchronized(this.lock) {
 			this.ret = ret;
-			this.lock.notifyAll();
 			this.done = true;
+			this.lock.notifyAll();
 		}
 	}
 

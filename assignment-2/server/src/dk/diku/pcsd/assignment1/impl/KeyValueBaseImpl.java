@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
+import dk.diku.pcsd.assignment2.impl.CheckpointerImpl;
+import dk.diku.pcsd.assignment2.impl.KeyValueBaseLogImpl;
+import dk.diku.pcsd.assignment2.impl.LoggerImpl;
 import dk.diku.pcsd.keyvaluebase.exceptions.BeginGreaterThanEndException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyAlreadyPresentException;
 import dk.diku.pcsd.keyvaluebase.exceptions.KeyNotFoundException;
@@ -26,8 +29,8 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
  * 
  */
 public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
-	private IndexImpl index;
-	private boolean initialized = false, initializing = false;
+	protected IndexImpl index;
+	protected boolean initialized = false, initializing = false;
 
 	public KeyValueBaseImpl() {
 		this(IndexImpl.getInstance());
@@ -35,6 +38,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 
 	private KeyValueBaseImpl(IndexImpl index) {
 		this.index = index;
+		LoggerImpl logger = LoggerImpl.getInstance();
+		KeyValueBaseLogImpl log = KeyValueBaseLogImpl.getInstance(logger);
+		CheckpointerImpl.createInstance(log, logger);
 	}
 
 	/**

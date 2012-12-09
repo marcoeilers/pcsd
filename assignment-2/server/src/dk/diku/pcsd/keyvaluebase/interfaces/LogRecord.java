@@ -66,7 +66,7 @@ public class LogRecord implements Serializable {
 		return m.invoke(src, this.params);
 	}
 	
-	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+	public void writeObject(java.io.ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
 		
 		for (int i=0; i<this.numberParam; i++) {
@@ -78,7 +78,7 @@ public class LogRecord implements Serializable {
 		}
 	}
 	
-	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+	public void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 		
 		this.params = new Object[this.numberParam];
