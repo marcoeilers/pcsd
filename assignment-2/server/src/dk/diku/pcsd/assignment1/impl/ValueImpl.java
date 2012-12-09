@@ -6,8 +6,9 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Value;
  * Wrapper for a value that is to be stored in the store. Values can either be
  * strings or any primitive value that exists in Java.
  */
-@SuppressWarnings("serial")
+
 public class ValueImpl implements Value {
+	private static final long serialVersionUID = -8073246226564164920L;
 	private Object v;
 
 	public ValueImpl() {

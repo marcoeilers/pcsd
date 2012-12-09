@@ -1,6 +1,7 @@
 package dk.diku.pcsd.assignment1.impl;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -25,7 +26,8 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
  * implemented here. The index also handles concurrency control. This class is a
  * singleton.
  */
-public class IndexImpl implements Index<KeyImpl, ValueListImpl> {
+public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
+	private static final long serialVersionUID = -9031109579818966516L;
 
 	private static IndexImpl instance;
 

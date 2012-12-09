@@ -124,7 +124,7 @@ public class MemoryMappedPinnable extends MemoryMappedFile {
 		 * @return the ending position
 		 */
 		public long getEndPosition() {
-			return this.startPosition + this.size;
+			return this.startPosition + this.size - 1L;
 		}
 
 		/**

@@ -4,9 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.util.regex.Matcher;
 
-import dk.diku.pcsd.keyvaluebase.interfaces.MemoryMappedFile;
+import dk.diku.pcsd.keyvaluebase.interfaces.MemoryMappedPinnable;
 import dk.diku.pcsd.keyvaluebase.interfaces.Store;
 
 /**
@@ -24,7 +23,7 @@ public class StoreImpl implements Store {
 	private final RandomAccessFile mmfRandomAccessFile;
 
 	// abstraction over the file
-	private final MemoryMappedFile mmf;
+	private final MemoryMappedPinnable mmf;
 
 	// singleton
 	private static StoreImpl instance = null;
@@ -36,17 +35,12 @@ public class StoreImpl implements Store {
 	}
 
 	private StoreImpl() {
-		String tmpDir = System.getProperty("java.io.tmpdir");
+		String tmpDir = System.getProperty("user.home");
 		if (!tmpDir.endsWith(File.separator))
 			tmpDir += File.separator;
 
 		// versioning of the store
 		String mmfPath = tmpDir
-				+ getClass()
-						.getPackage()
-						.getName()
-						.replaceAll("\\.",
-								Matcher.quoteReplacement(File.separator))
 				+ File.separator + "store.mmf";
 		File mmfFile = new File(mmfPath);
 
@@ -61,7 +55,7 @@ public class StoreImpl implements Store {
 
 			// initialize the memory mapped file with either the old file or the
 			// newly created one
-			mmf = new MemoryMappedFile(mmfRandomAccessFile.getChannel(),
+			mmf = new MemoryMappedPinnable(mmfRandomAccessFile.getChannel(),
 					FileChannel.MapMode.READ_WRITE, 0, MMF_SIZE);
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
@@ -90,11 +84,16 @@ public class StoreImpl implements Store {
 	@Override
 	public void write(Long position, byte[] value) {
 		try {
+			mmf.writePinned(value, position);
 			mmf.put(value, position);
 		} catch (Exception e) {
 			throw new RuntimeException("Position: " + position + ", Length: "
 					+ value.length + ", " + e.getMessage(), e);
 		}
+	}
+	
+	public void flush(){
+		mmf.flush();
 	}
 
 }

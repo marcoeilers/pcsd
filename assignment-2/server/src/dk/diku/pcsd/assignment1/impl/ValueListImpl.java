@@ -10,9 +10,8 @@ import dk.diku.pcsd.keyvaluebase.interfaces.ValueList;
  * Wrapper for a list of ValueImpls.
  *
  */
-@SuppressWarnings("serial")
 public class ValueListImpl implements ValueList<ValueImpl>{
-	
+	private static final long serialVersionUID = -1407947181044059243L;
 	private List<ValueImpl> valueList = new ArrayList<ValueImpl>();
 	
 	public List<ValueImpl> getValueList() {
