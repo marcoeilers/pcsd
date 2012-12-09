@@ -17,8 +17,10 @@ import java.lang.Math;
   */
 public class MemoryMappedFile{
 
+	public static int developmentVersion = 1;
+	
 	private static final long PAGE_SIZE = Integer.MAX_VALUE;
-	private ArrayList<MappedByteBuffer> buffers = new ArrayList<MappedByteBuffer>();
+	protected ArrayList<MappedByteBuffer> buffers = new ArrayList<MappedByteBuffer>();
 	protected long position = 0;
 	protected long totalSize;
 	
