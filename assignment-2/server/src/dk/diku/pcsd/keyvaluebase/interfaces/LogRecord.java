@@ -60,6 +60,7 @@ public class LogRecord implements Serializable {
 
 		Class<?>[] params = new Class<?>[this.numberParam];
 		for (int i=0; i<this.numberParam; i++)
+			// FIXME incredibly ugly
 			params[i] = this.params[i]!=null?  this.params[i].getClass() : String.class;
 		
 		Method m =  this.className.getMethod(methodName, params);
