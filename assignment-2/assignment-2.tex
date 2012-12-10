@@ -20,7 +20,10 @@
 \usepackage{threeparttable}
 \usepackage{footnote}
 \usepackage{listings}
+\usepackage{tikz}
 \makesavenoteenv{tabular}
+
+\usetikzlibrary{arrows,automata}
 
 \lhead{\textbf{\Module}}
 \rhead{\Uebung~(Submission: \Sub_date)}
@@ -55,6 +58,31 @@ why or why not.
 2PL)? If so, show it by injecting read/write lock operations in accordance to strict 2PL rules. If
 not, explain why.
 
+\subsubsection*{(a)}
+\begin{tikzpicture}[->,>=stealth',shorten >= 1pt,auto,node distance=2.cm,accepting/.style={double distance= 1.5pt},semithick]
+\node[state](1) {$T1$};
+\node[state] (2) [right of=1] {$T2$};
+\node[state] (3) [below of=2] {$T3$};
+
+\path (1) edge [bend left] node {} (2)
+      (2) edge [bend left] node {} (3)
+      (3) edge [bend left] node {} (1);
+
+\end{tikzpicture}
+
+\begin{tikzpicture}[->,>=stealth',shorten >= 1pt,auto,node distance=2.cm,accepting/.style={double distance= 1.5pt},semithick]
+\node[state](1) {$T1$};
+\node[state] (2) [right of=1] {$T2$};
+\node[state] (3) [below of=2] {$T3$};
+
+\path (1) edge [bend left] node {} (2)
+      (3) edge [bend right] node {} (2);
+
+\end{tikzpicture}
+
+\subsubsection*{(b)}
+
+
 
 \subsection*{Question 2}
 \label{sec:eq2}
@@ -73,15 +101,17 @@ fails, along with the offending objects from the read and write sets of T1 and T
 \subsection*{Question 3}
 \label{sec:eq3}
 
-(a) In a system implementing force and no-steal, is it necessary to implement a scheme for redo?
-What about a scheme for undo? Explain why.
-
-(b) What is the difference between nonvolatile and stable storage? What types of failures are
-survived by each type of storage?
-
 (c) In a system that implements Write-Ahead Logging, which are the two situations in which the log
 tail must be forced to stable storage? Explain why log forces are necessary in these situations and
 argue why they are sufficient for durability.
+
+\subsubsection*{(a)}
+Such a system needs neither undo nor redo. Since all commited operations are immediately forced to nonvolatile or even stable storage, no such operations get lost in a crash and therefore we never have to redo them during the recovery process. Similarly, we also know that noncommitted changes only remain in volatile storage and are not written to disk until they are committed. This means that it is impossible for changes to land on disk until it is certain that they will stay there, and therefore we never need to undo any changes.
+
+\subsubsection*{(b)}
+The only thing we assume about nonvolatile storage is that the data in it does not automatically get lost during a crash or when the system is intentionally turned off or restarted. That makes it different from volatile storage, which is lost everytime the system is turned off in some way. However, nonvolatile storage may get lost if there are other (mechanical) failures, like a classical disk failure. With stable storage, we assume that this can never ever happen, and that everything that we store in it is guaranteed to remain there without any errors basically forever. In practice, it is nearly impossible to guarantee that, but one can get storage that can be considered "stable" for all practical purposes by using a lot of duplicate nonvolatile storage devices, possibly in different physical locations.
+
+\subsubsection*{(c)}
 
 
 \subsection*{Question 4}
