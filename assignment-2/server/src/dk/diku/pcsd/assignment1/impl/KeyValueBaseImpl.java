@@ -37,14 +37,14 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 	protected LoggerImpl logger;
 	public static boolean initialized = false, initializing = false;
 
-	
+	private boolean logging = true;
 
 	public KeyValueBaseImpl() {
 		logger = LoggerImpl.getInstance();
 		KeyValueBaseLogImpl log = KeyValueBaseLogImpl.getInstance(logger);
 		CheckpointerImpl.createInstance(log, logger);
-		
-		if (!initialized && !initializing){
+
+		if (!initialized && !initializing) {
 			log.recover(this);
 		}
 		index = IndexImpl.getInstance();
@@ -64,7 +64,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			ServiceInitializingException, FileNotFoundException {
 		MasterLock.getSharedLock().lock();
 		try {
-			waitFor(logger.logRequest(new LogRecord(this.getClass(), "init", new Object[]{serverFilename})));
+			if (logging)
+				waitFor(logger.logRequest(new LogRecord(this.getClass(),
+						"init", new Object[] { serverFilename })));
 			if (initialized)
 				throw new ServiceAlreadyInitializedException();
 			if (initializing)
@@ -149,7 +151,6 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			IOException, ServiceNotInitializedException {
 		MasterLock.getSharedLock().lock();
 		try {
-			waitFor(logger.logRequest(new LogRecord(this.getClass(), "read", new Object[]{k})));
 			if (!initialized)
 				throw new ServiceNotInitializedException();
 			return index.get(k);
@@ -164,7 +165,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			ServiceNotInitializedException {
 		MasterLock.getSharedLock().lock();
 		try {
-			waitFor(logger.logRequest(new LogRecord(this.getClass(), "insert", new Object[]{k,v})));
+			if (logging)
+				waitFor(logger.logRequest(new LogRecord(this.getClass(),
+						"insert", new Object[] { k, v })));
 			if (!initialized)
 				throw new ServiceNotInitializedException();
 			index.insert(k, v);
@@ -179,7 +182,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			ServiceNotInitializedException {
 		MasterLock.getSharedLock().lock();
 		try {
-			waitFor(logger.logRequest(new LogRecord(this.getClass(), "update", new Object[]{k, newV})));
+			if (logging)
+				waitFor(logger.logRequest(new LogRecord(this.getClass(),
+						"update", new Object[] { k, newV })));
 			if (!initialized)
 				throw new ServiceNotInitializedException();
 			index.update(k, newV);
@@ -193,7 +198,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			ServiceNotInitializedException {
 		MasterLock.getSharedLock().lock();
 		try {
-			waitFor(logger.logRequest(new LogRecord(this.getClass(), "delete", new Object[]{k})));
+			if (logging)
+				waitFor(logger.logRequest(new LogRecord(this.getClass(),
+						"delete", new Object[] { k })));
 			if (!initialized)
 				throw new ServiceNotInitializedException();
 			index.remove(k);
@@ -208,7 +215,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			BeginGreaterThanEndException, ServiceNotInitializedException {
 		MasterLock.getSharedLock().lock();
 		try {
-			waitFor(logger.logRequest(new LogRecord(this.getClass(), "scan", new Object[]{begin, end})));
+			if (logging)
+				waitFor(logger.logRequest(new LogRecord(this.getClass(),
+						"scan", new Object[] { begin, end })));
 			if (!initialized)
 				throw new ServiceNotInitializedException();
 			List<ValueListImpl> allValues = index.scan(begin, end);
@@ -229,7 +238,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			BeginGreaterThanEndException, ServiceNotInitializedException {
 		MasterLock.getSharedLock().lock();
 		try {
-			waitFor(logger.logRequest(new LogRecord(this.getClass(), "atomicScan", new Object[]{begin, end})));
+			if (logging)
+				waitFor(logger.logRequest(new LogRecord(this.getClass(),
+						"atomicScan", new Object[] { begin, end })));
 			if (!initialized)
 				throw new ServiceNotInitializedException();
 			List<ValueListImpl> allValues = index.atomicScan(begin, end);
@@ -249,7 +260,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			throws IOException, ServiceNotInitializedException {
 		MasterLock.getSharedLock().lock();
 		try {
-			waitFor(logger.logRequest(new LogRecord(this.getClass(), "bulkPut", new Object[]{mappings})));
+			if (logging)
+				waitFor(logger.logRequest(new LogRecord(this.getClass(),
+						"bulkPut", new Object[] { mappings })));
 			if (!initialized)
 				throw new ServiceNotInitializedException();
 			index.bulkPut(mappings);
@@ -257,22 +270,26 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			MasterLock.getSharedLock().unlock();
 		}
 	}
-	
-	private void waitFor(Future<?> f){
-		
-			while (!f.isDone()){
-				try {
-					f.wait();
-				} catch (InterruptedException e) {
-				} catch (IllegalMonitorStateException e){
-					
-				}
+
+	private void waitFor(Future<?> f) {
+
+		while (!f.isDone()) {
+			try {
+				f.wait();
+			} catch (InterruptedException e) {
+			} catch (IllegalMonitorStateException e) {
+
 			}
-		
+		}
+
 	}
-	
-	public void setIndex(IndexImpl i){
+
+	public void setIndex(IndexImpl i) {
 		this.index = i;
+	}
+
+	public void setLogging(boolean b) {
+		logging = b;
 	}
 
 }

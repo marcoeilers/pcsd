@@ -48,7 +48,7 @@ public class KeyValueBaseLogImpl implements KeyValueBaseLog<KeyImpl,ValueListImp
 			System.out.println("kvb is "+kvb);
 			
 			List<LogRecord> entries = logger.getLogEntries();
-			
+			kvb.setLogging(false);
 			for (LogRecord rec : entries){
 				try {
 					rec.invoke(kvb);
@@ -64,6 +64,7 @@ public class KeyValueBaseLogImpl implements KeyValueBaseLog<KeyImpl,ValueListImp
 					e.printStackTrace();
 				}
 			}
+			kvb.setLogging(true);
 			return true;
 		}else{
 			return false;
