@@ -1,6 +1,10 @@
 package dk.diku.pcsd.assignment1.impl;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,9 +35,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 
 	private static IndexImpl instance;
 
-	private StoreImpl store;
+	private transient StoreImpl store;
 
-	private ValueSerializerImpl vs = new ValueSerializerImpl();
+	private transient ValueSerializerImpl vs = new ValueSerializerImpl();
 
 	private long fileLength = 0;
 
@@ -57,6 +61,41 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 			instance = new IndexImpl();
 		}
 		return instance;
+	}
+	
+	public static void recreate(){
+		String indexPath = System.getProperty("user.home");
+		if (!indexPath.endsWith(File.separator))
+			indexPath += File.separator;
+		indexPath += "kvindex.ind";
+		
+		try {
+			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(indexPath));
+			Object oldIndex = ois.readObject();
+			if (oldIndex instanceof IndexImpl){
+				instance = (IndexImpl) oldIndex;
+				instance.setStore(StoreImpl.recreate());
+			}else{
+				System.out.println("Something went terribly wrong.");
+			}
+			
+			
+			
+			
+		} catch (FileNotFoundException e) {
+			instance = new IndexImpl();
+		} catch (IOException e) {
+			instance = new IndexImpl();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private void setStore(StoreImpl s){
+		this.store = s;
+		this.vs = new ValueSerializerImpl();
 	}
 
 	/**

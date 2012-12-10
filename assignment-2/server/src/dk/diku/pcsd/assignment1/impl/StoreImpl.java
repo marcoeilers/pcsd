@@ -17,7 +17,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Store;
 public class StoreImpl implements Store {
 
 	// size of the file
-	private static final long MMF_SIZE = 34359738368L; // 32GB
+	private static final long MMF_SIZE = 1024L* 1024L*100L; // 32GB
 
 	// the actual file
 	private final RandomAccessFile mmfRandomAccessFile;
@@ -30,31 +30,40 @@ public class StoreImpl implements Store {
 
 	public static StoreImpl getInstance() {
 		if (instance == null)
-			instance = new StoreImpl();
+			instance = new StoreImpl(true);
+		return instance;
+	}
+	
+	public static StoreImpl recreate(){
+		instance = new StoreImpl(false);
 		return instance;
 	}
 
-	private StoreImpl() {
-		String tmpDir = System.getProperty("user.home");
+	private StoreImpl(boolean overwrite) {
+		String tmpDir = System.getProperty("java.io.tmpdir");
 		if (!tmpDir.endsWith(File.separator))
 			tmpDir += File.separator;
 
 		// versioning of the store
-		String mmfPath = tmpDir
-				+ File.separator + "store.mmf";
+		String mmfPath = tmpDir + File.separator + "store.mmf";
 		File mmfFile = new File(mmfPath);
 
 		try {
 			// always create new file
-			if (mmfFile.exists())
-				mmfFile.delete();
+			if (overwrite) {
+				if (mmfFile.exists())
+					mmfFile.delete();
 
-			mmfFile.getParentFile().mkdirs();
-			mmfRandomAccessFile = new RandomAccessFile(mmfPath, "rw");
-			mmfRandomAccessFile.setLength(MMF_SIZE);
+				mmfFile.getParentFile().mkdirs();
+				mmfRandomAccessFile = new RandomAccessFile(mmfPath, "rw");
+				mmfRandomAccessFile.setLength(MMF_SIZE);
 
-			// initialize the memory mapped file with either the old file or the
-			// newly created one
+				// initialize the memory mapped file with either the old file or
+				// the
+				// newly created one
+			} else {
+				mmfRandomAccessFile = new RandomAccessFile(mmfPath, "rw");
+			}
 			mmf = new MemoryMappedPinnable(mmfRandomAccessFile.getChannel(),
 					FileChannel.MapMode.READ_WRITE, 0, MMF_SIZE);
 		} catch (IOException e) {
@@ -91,8 +100,8 @@ public class StoreImpl implements Store {
 					+ value.length + ", " + e.getMessage(), e);
 		}
 	}
-	
-	public void flush(){
+
+	public void flush() {
 		mmf.flush();
 	}
 

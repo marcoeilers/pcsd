@@ -32,7 +32,9 @@ public class LoggerImpl implements Logger {
 
 	private BlockingQueue<LogRequest> requests = new LinkedBlockingQueue<LogRequest>();
 	private ObjectOutputStream oos;
+	private FileOutputStream fos;
 	private String logPath;
+	private boolean logExisted;
 
 	@Override
 	public void run() {
@@ -42,7 +44,7 @@ public class LoggerImpl implements Logger {
 				LogRequest current = requests.poll(Long.MAX_VALUE,
 						TimeUnit.DAYS);
 				log(current.getRecord());
-				current.getFuture().notifyAll();
+				current.getFuture().signalAll(Boolean.TRUE);
 
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -62,6 +64,7 @@ public class LoggerImpl implements Logger {
 
 	private void log(LogRecord record) throws IOException {
 		oos.writeObject(record);
+		oos.flush();
 	}
 
 	private LoggerImpl() {
@@ -70,19 +73,27 @@ public class LoggerImpl implements Logger {
 			logPath += File.separator;
 		logPath += "kvstore.log";
 
+		File logFile = new File(logPath);
+		logExisted = logFile.exists();
+		
 		try {
-			oos = new ObjectOutputStream(new FileOutputStream(logPath, true));
+			fos = new FileOutputStream(logPath, true);
+			oos = new ObjectOutputStream(fos);
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
 	}
+	
+	public boolean hasLog(){
+		return logExisted;
+	}
 
 	public List<LogRecord> getLogEntries() {
 		ObjectInputStream ois;
 		List<LogRecord> result = new ArrayList<LogRecord>();
-
+		System.out.println("getting log entries");
 		try {
 			ois = new ObjectInputStream(new FileInputStream(logPath));
 
@@ -91,6 +102,7 @@ public class LoggerImpl implements Logger {
 					Object current = ois.readObject();
 					if (current instanceof LogRecord) {
 						result.add((LogRecord) current);
+						System.out.println("current is "+((LogRecord)current).getMethodName());
 					}
 				} catch (Exception e) {
 					break;
@@ -107,6 +119,22 @@ public class LoggerImpl implements Logger {
 
 		return result;
 
+	}
+	
+	public void truncate(){
+		
+		try {
+			oos.close();
+			fos = new FileOutputStream(logPath, false);
+			oos = new ObjectOutputStream(fos);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 	
 	@Override

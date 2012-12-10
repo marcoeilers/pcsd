@@ -1,8 +1,14 @@
 package dk.diku.pcsd.assignment2.impl;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+
+import dk.diku.pcsd.assignment1.impl.IndexImpl;
 import dk.diku.pcsd.assignment1.impl.KeyImpl;
+import dk.diku.pcsd.assignment1.impl.KeyValueBaseImpl;
 import dk.diku.pcsd.assignment1.impl.ValueListImpl;
 import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseLog;
+import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Logger;
 
 public class KeyValueBaseLogImpl implements KeyValueBaseLog<KeyImpl,ValueListImpl> {
@@ -18,12 +24,12 @@ public class KeyValueBaseLogImpl implements KeyValueBaseLog<KeyImpl,ValueListImp
 	
 	@Override
 	public void quiesce() {
-		// TODO		
+		MasterLock.getExclusiveLock().lock();
 	}
 
 	@Override
 	public void resume() {
-		// TODO		
+		MasterLock.getExclusiveLock().unlock();
 	}
 	
 	private KeyValueBaseLogImpl(LoggerImpl logger){
@@ -32,6 +38,38 @@ public class KeyValueBaseLogImpl implements KeyValueBaseLog<KeyImpl,ValueListImp
 	
 	public Logger getLogger(){
 		return logger;
+	}
+	
+	public boolean recover(KeyValueBaseImpl kvb){
+		if (logger.hasLog()){
+			IndexImpl.recreate();
+			kvb.setIndex(IndexImpl.getInstance());
+			
+			//KeyValueBaseImpl kvb = new KeyValueBaseImpl();
+			System.out.println("kvb is "+kvb);
+			
+			List<LogRecord> entries = logger.getLogEntries();
+			
+			for (LogRecord rec : entries){
+				try {
+					rec.invoke(kvb);
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			}
+			return true;
+		}else{
+			return false;
+		}
+		
 	}
 	
 }

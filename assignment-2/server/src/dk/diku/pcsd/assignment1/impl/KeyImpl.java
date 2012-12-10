@@ -1,5 +1,6 @@
 package dk.diku.pcsd.assignment1.impl;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -14,7 +15,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Key;
  * in the store.
  * 
  */
-public class KeyImpl implements Key<KeyImpl> {
+public class KeyImpl implements Key<KeyImpl>, Serializable {
 	// locks for all keys in the store
 	private static HashMap<String, ReadWriteLock> locks = new HashMap<String, ReadWriteLock>();
 

@@ -29,7 +29,7 @@ public class LogRecord implements Serializable {
 	private Class<?> className;
 	private String methodName;
 	private int numberParam;
-	private transient Object[] params;
+	private Object[] params;
 
 	public LogRecord(Class<?> srcClass, String methodName, Object[] params) {
 		this.className = srcClass;

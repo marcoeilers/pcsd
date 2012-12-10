@@ -40,7 +40,7 @@ public class CheckpointerImpl implements Checkpointer {
 				ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(indexPath));
 				oos.writeObject(IndexImpl.getInstance());
 				oos.close();
-				//TODO truncate log
+				logger.truncate();
 				log.resume();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block

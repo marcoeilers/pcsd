@@ -1,7 +1,5 @@
 package dk.diku.pcsd.assignment2.impl;
 
-import java.util.concurrent.Future;
-
 import dk.diku.pcsd.keyvaluebase.interfaces.FutureLog;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 
@@ -23,7 +21,7 @@ public class LogRequest {
 
 
 
-	public Future<?> getFuture() {
+	public FutureLog<Boolean> getFuture() {
 		return future;
 	}
 

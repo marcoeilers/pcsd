@@ -1,10 +1,12 @@
 package dk.diku.pcsd.assignment1.impl;
 
+import java.io.Serializable;
+
 /**
  * Specifies an area of memory in the store.
  * Contains an offset and a length.
  */
-public class SpaceIdent implements Comparable<SpaceIdent> {
+public class SpaceIdent implements Comparable<SpaceIdent>, Serializable {
 	private long pos;
 
 	private int length;
