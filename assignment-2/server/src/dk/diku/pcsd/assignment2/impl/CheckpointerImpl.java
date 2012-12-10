@@ -8,10 +8,13 @@ import java.io.ObjectOutputStream;
 
 import dk.diku.pcsd.assignment1.impl.IndexImpl;
 import dk.diku.pcsd.assignment1.impl.KeyImpl;
+import dk.diku.pcsd.assignment1.impl.KeyValueBaseImpl;
+import dk.diku.pcsd.assignment1.impl.KeyValueBaseImplService;
 import dk.diku.pcsd.assignment1.impl.StoreImpl;
 import dk.diku.pcsd.assignment1.impl.ValueListImpl;
 import dk.diku.pcsd.keyvaluebase.interfaces.Checkpointer;
 import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseLog;
+import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 
 public class CheckpointerImpl implements Checkpointer {
 	private final long CHECKPOINT_PERIOD = 60000;
@@ -41,6 +44,9 @@ public class CheckpointerImpl implements Checkpointer {
 				oos.writeObject(IndexImpl.getInstance());
 				oos.close();
 				logger.truncate();
+				if (KeyValueBaseImpl.initialized){
+					logger.logRequest(new LogRecord(KeyValueBaseImplService.class, "init", new Object[]{null}));
+				}
 				log.resume();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block

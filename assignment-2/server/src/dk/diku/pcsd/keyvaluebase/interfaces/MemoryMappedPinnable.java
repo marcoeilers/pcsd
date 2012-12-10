@@ -43,7 +43,9 @@ public class MemoryMappedPinnable extends MemoryMappedFile {
 		Iterator<PinnedRegion> it = this.pinned_regions.keySet().iterator();
 		while(it.hasNext()) {
 			if (pR.overlaps(it.next())) {
-				throw new IndexOutOfBoundsException("Overlapping with another itnerval");
+				// throw new IndexOutOfBoundsException("Overlapping with another itnerval");
+				//FIXME ugly
+				it.remove();
 			}
 		}
 

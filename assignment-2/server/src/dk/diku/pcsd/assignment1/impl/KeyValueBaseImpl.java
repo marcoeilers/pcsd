@@ -35,7 +35,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 	protected IndexImpl index;
 	protected LoggerImpl logger;
-	protected boolean initialized = false, initializing = false;
+	public static boolean initialized = false, initializing = false;
 
 	
 
@@ -45,11 +45,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 		CheckpointerImpl.createInstance(log, logger);
 		
 		if (!initialized && !initializing){
-			//initializing = true;
-			if (log.recover(this)){
-				initialized = true;
-			}
-			//initializing = false;
+			log.recover(this);
 		}
 		index = IndexImpl.getInstance();
 	}

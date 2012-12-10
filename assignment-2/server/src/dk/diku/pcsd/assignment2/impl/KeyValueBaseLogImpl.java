@@ -45,7 +45,6 @@ public class KeyValueBaseLogImpl implements KeyValueBaseLog<KeyImpl,ValueListImp
 			IndexImpl.recreate();
 			kvb.setIndex(IndexImpl.getInstance());
 			
-			//KeyValueBaseImpl kvb = new KeyValueBaseImpl();
 			System.out.println("kvb is "+kvb);
 			
 			List<LogRecord> entries = logger.getLogEntries();
