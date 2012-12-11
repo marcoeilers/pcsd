@@ -107,15 +107,14 @@ This one could come from a Strict 2PL scheduler. T1 gets a lock on X and Y befor
 \subsection*{Question 2}
 \label{sec:eq2}
 
-Consider the following scenarios, which illustrate the
-execution of three transactions under the Kung-Robinson optimistic concurrency control model. In each
-scenario, transactions T1 and T2 have successfully committed, and the concurrency control mechanism
-needs to determine a decision for transaction T3. The read and write sets (RS and WS, respectively) for
-each transaction list the identifiers of the objects accessed by the transaction.
+Scenario 1:
+Since T1 has completed before T3 starts, there is no conflict between those two transactions. However, since T2 completes before T3 begins its write phase, we must make sure that WS(T2) $\cap$ RS(T3) is empty. Since both WS(T2) and RS(T3) contain 4, this is not the case, and T3 must be rolled back.
 
-For each scenario, predict whether T3 is allowed to commit. If T3 is allowed to commit, state which
-validation tests were necessary to reach that conclusion. If T3 must be rolled back, state all tests which T3
-fails, along with the offending objects from the read and write sets of T1 and T2.
+Scenario 2:
+Since T1 completes before T3 begins its write phase, we must again make sure that WS(T1) $\cap$ RS(T3) is empty. This is not the case, since both of these sets contain 3. Therefore T3 must be rolled back. In this case it is not important that T2 and T3 actually don't conflict: Since T2 completes its read phase before T3 does, we would have to make sure that WS(T2) $\cap$ RS(T3) and WS(T2) $\cap$ WS(T3) are both empty. This is the case, but as said before, this does not matter, because the conflict between T1 and T3 already forces us to roll back T3.
+ 
+Scenario 3: 
+Both T1 and T2 complete before T3 begins its write phase, which means that we must make sure that WS(T1) $\cap$ RS(T3) and WS(T2) $\cap$ RS(T3) are both empty. Since the write sets only contain 4 and 6, respectively, and neither of these elements is in the read set of T3, this is the case, and therefore T3 may commit.
 
 
 \subsection*{Question 3}
@@ -133,6 +132,8 @@ The only thing we assume about nonvolatile storage is that the data in it does n
 
 \subsubsection*{(c)}
 
+when committing, all log entries up to lastLSN must be flushed
+
 
 \subsection*{Question 4}
 \label{sec:eq4}
@@ -149,6 +150,58 @@ perform various operations. The detailed log follows:
 4. the set of log records that may cause pages to be rewritten during the redo phase;
 5. the set of log records undone during the undo phase;
 6. the contents of the log after the recovery procedure completes.
+
+
+\begin{enumerate}
+  \item Transaction table: see table \ref{tab:transactions}. Here the entry for T1 has already been removed. The status U denotes transactions that should be undone.
+  \item Dirty page table: see table \ref{tab:dirty}.
+  \item Losers = $\{T1, T2\}$, Winners = $\{T3\}$
+  \item The redo phase starts at LSN 3. The undo phase ends also at LSN 3. 
+  \item RewriteRecords = $\{3,4,5,6,8,9\}$
+  \item UndoRecords = $\{8,5,4,3\}$
+  \item Log after the recovery procedure: see table \ref{tab:after}.
+\end{enumerate}
+
+\begin{table}
+  \begin{tabular}{c | c | c}
+  Transaction ID & Status & lastLSN \\ \hline
+  T1 & U & 4\\
+  T2 & U & 9 
+  \end{tabular}
+  \caption{Transaction table after the analysis phase}
+  \label{tab:transactions}
+\end{table}
+
+\begin{table}
+  \begin{tabular}{c|c}
+  Page & recLSN \\ \hline
+  P2 & 3 \\
+  P1 & 4 \\
+  P5 & 5 \\
+  P3 & 6 
+  \end{tabular}
+  \caption{Dirty page table after the analysis phase}
+  \label{tab:dirty}
+\end{table}
+
+\begin{table}
+  \begin{tabular}{l | l | l | l | l}
+  LSN & LAST\_LSN & TRAN\_ID & TYPE & PAGE\_ID \\ \hline
+  1 & - & - & begin CKPT & - \\
+  2 & - & - & end CKPT & - \\
+  3 & NULL & T1 & update & P2 \\
+  4 & 3 & T1 & update & P1 \\
+  5 & NULL & T2 & update & P5 \\
+  6 & NULL & T3 & update & P3 \\
+  7 & 6 & T3 & commit & - \\
+  8 & 5 & T2 & update & P5 \\
+  9 & 8 T2 & update & P3 \\
+  10 & 6 & T3 & end & - 
+    
+  \end{tabular}
+  \caption{The log after the recovery procedure completes}
+  \label{tab:after}
+\end{table}
 
 
 \section*{Programming} 
