@@ -1,4 +1,4 @@
-package data;
+package assg1data;
 
 public class ZipfGenerator {
 	

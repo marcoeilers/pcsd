@@ -1,10 +1,11 @@
-package data;
+package assg1data;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Random;
-import data.ZipfGenerator;
+
+import assg1data.ZipfGenerator;
 
 
 public class ZipfMain {

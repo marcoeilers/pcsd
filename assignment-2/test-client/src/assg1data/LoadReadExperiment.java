@@ -1,4 +1,4 @@
-package data;
+package assg1data;
 
 import java.io.File;
 import java.io.FileNotFoundException;
