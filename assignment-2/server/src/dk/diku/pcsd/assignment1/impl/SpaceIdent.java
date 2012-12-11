@@ -7,6 +7,8 @@ import java.io.Serializable;
  * Contains an offset and a length.
  */
 public class SpaceIdent implements Comparable<SpaceIdent>, Serializable {
+	private static final long serialVersionUID = -1616081300643637504L;
+
 	private long pos;
 
 	private int length;

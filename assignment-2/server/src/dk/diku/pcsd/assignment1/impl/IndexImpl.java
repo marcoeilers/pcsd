@@ -49,7 +49,7 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 	private Map<KeyImpl, SpaceIdent> mappings = new Hashtable<KeyImpl, SpaceIdent>();
 
 	// Lock on the mappings table
-	private final ReadWriteLock mappingsLock;
+	private transient ReadWriteLock mappingsLock;
 
 	private IndexImpl() {
 		this.store = StoreImpl.getInstance();
@@ -69,12 +69,13 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 			indexPath += File.separator;
 		indexPath += "kvindex.ind";
 		
+		ObjectInputStream ois = null;
 		try {
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(indexPath));
+			ois = new ObjectInputStream(new FileInputStream(indexPath));
 			Object oldIndex = ois.readObject();
 			if (oldIndex instanceof IndexImpl){
 				instance = (IndexImpl) oldIndex;
-				instance.setStore(StoreImpl.recreate());
+				instance.reinitialize(StoreImpl.recreate());
 			}else{
 				System.out.println("Something went terribly wrong.");
 			}
@@ -89,13 +90,20 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}finally{
+			try {
+				ois.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		
 	}
 	
-	private void setStore(StoreImpl s){
+	private void reinitialize(StoreImpl s){
 		this.store = s;
 		this.vs = new ValueSerializerImpl();
+		this.mappingsLock = new ReentrantReadWriteLock();
 	}
 
 	/**

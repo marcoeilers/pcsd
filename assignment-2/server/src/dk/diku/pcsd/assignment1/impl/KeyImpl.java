@@ -16,6 +16,8 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Key;
  * 
  */
 public class KeyImpl implements Key<KeyImpl>, Serializable {
+	private static final long serialVersionUID = -7705948534566626626L;
+
 	// locks for all keys in the store
 	private static HashMap<String, ReadWriteLock> locks = new HashMap<String, ReadWriteLock>();
 
@@ -95,7 +97,7 @@ public class KeyImpl implements Key<KeyImpl>, Serializable {
 			return locks.get(key).writeLock();
 		}
 	}
-
+	
 	/**
 	 * Removes this key's lock from the lock list. Should only be used when a
 	 * key-value-pair is deleted from the store.

@@ -1,9 +1,6 @@
 package dk.diku.pcsd.keyvaluebase.interfaces;
 
-import java.io.IOException;
-import java.io.NotSerializableException;
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -65,64 +62,6 @@ public class LogRecord implements Serializable {
 		
 		Method m =  this.className.getMethod(methodName, params);
 		return m.invoke(src, this.params);
-	}
-	
-	public void writeObject(java.io.ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-		
-		for (int i=0; i<this.numberParam; i++) {
-			Object obj = this.params[i];
-			if (obj instanceof Serializable)
-				out.writeObject(obj);
-			else
-				out.writeObject(new SerializablePair(obj));
-		}
-	}
-	
-	public void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-		
-		this.params = new Object[this.numberParam];
-		Object obj = null;
-		for (int i=0; i<this.numberParam; i++) {
-			obj = in.readObject();
-			if (obj instanceof SerializablePair)
-				obj = ((SerializablePair)obj).getObject();
-			this.params[i] = obj;
-		}
-	}
-	
-	private class SerializablePair implements Serializable {
-		
-		private static final long serialVersionUID = 1L;
-		private Class<?> className;
-		private String object;
-		
-		public SerializablePair(Object object) throws NotSerializableException {
-			this.className = object.getClass();
-			this.object = object.toString();
-			if (this.getStringConstructor() == null)
-				throw new NotSerializableException();
-		}
-		
-		public Object getObject() {
-			Constructor<?> constr = this.getStringConstructor();
-			Object ret = null;
-			try {
-				ret = constr.newInstance(this.object);
-			} catch (Exception e) {}
-			
-			return ret;
-		}
-		
-		private Constructor<?> getStringConstructor() {
-			try {
-				return this.className.getConstructor(String.class);
-			} catch (Exception e) {
-				return null;
-			}
-		}
-		
-	}
+	}	
 	
 }
