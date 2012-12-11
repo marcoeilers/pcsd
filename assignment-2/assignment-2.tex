@@ -131,30 +131,15 @@ Such a system needs neither undo nor redo. Since all commited operations are imm
 The only thing we assume about nonvolatile storage is that the data in it does not automatically get lost during a crash or when the system is intentionally turned off or restarted. That makes it different from volatile storage, which is lost everytime the system is turned off in some way. However, nonvolatile storage may get lost if there are other (mechanical) failures, like a classical disk failure. With stable storage, we assume that this can never ever happen, and that everything that we store in it is guaranteed to remain there without any errors basically forever. In practice, it is nearly impossible to guarantee that, but one can get storage that can be considered "stable" for all practical purposes by using a lot of duplicate nonvolatile storage devices, possibly in different physical locations.
 
 \subsubsection*{(c)}
-
+TODO
 when committing, all log entries up to lastLSN must be flushed
 
 
 \subsection*{Question 4}
 \label{sec:eq4}
 
-Consider the recovery scenario described in the following, in which we use the
-ARIES recovery algorithm. At the beginning of time, there are no transactions active in the system and no
-dirty pages. A checkpoint is taken. After that, three transactions, T1, T2, and T3, enter the system and
-perform various operations. The detailed log follows:
-
-(a) Apply the ARIES recovery algorithm to the scenario above. Show:
-1. the state of the transaction and dirty page tables after the analysis phase;
-2. the sets of winner and loser transactions;
-3. the values for the LSNs where the redo phase starts and where the undo phase ends;
-4. the set of log records that may cause pages to be rewritten during the redo phase;
-5. the set of log records undone during the undo phase;
-6. the contents of the log after the recovery procedure completes.
-
-
 \begin{enumerate}
-  \item Transaction table: see table \ref{tab:transactions}. Here the entry for T1 has already been removed. The status U denotes transactions that should be undone.
-  \item Dirty page table: see table \ref{tab:dirty}.
+  \item Transaction table: see table \ref{tab:transactions}. Here the entry for T1 has already been removed. The status U denotes transactions that should be undone. For the dirty page table, see table \ref{tab:dirty}.
   \item Losers = $\{T1, T2\}$, Winners = $\{T3\}$
   \item The redo phase starts at LSN 3. The undo phase ends also at LSN 3. 
   \item RewriteRecords = $\{3,4,5,6,8,9\}$
@@ -163,6 +148,7 @@ perform various operations. The detailed log follows:
 \end{enumerate}
 
 \begin{table}
+  \centering
   \begin{tabular}{c | c | c}
   Transaction ID & Status & lastLSN \\ \hline
   T1 & U & 4\\
@@ -173,6 +159,7 @@ perform various operations. The detailed log follows:
 \end{table}
 
 \begin{table}
+  \centering
   \begin{tabular}{c|c}
   Page & recLSN \\ \hline
   P2 & 3 \\
@@ -185,18 +172,26 @@ perform various operations. The detailed log follows:
 \end{table}
 
 \begin{table}
-  \begin{tabular}{l | l | l | l | l}
-  LSN & LAST\_LSN & TRAN\_ID & TYPE & PAGE\_ID \\ \hline
-  1 & - & - & begin CKPT & - \\
-  2 & - & - & end CKPT & - \\
-  3 & NULL & T1 & update & P2 \\
-  4 & 3 & T1 & update & P1 \\
-  5 & NULL & T2 & update & P5 \\
-  6 & NULL & T3 & update & P3 \\
-  7 & 6 & T3 & commit & - \\
-  8 & 5 & T2 & update & P5 \\
-  9 & 8 T2 & update & P3 \\
-  10 & 6 & T3 & end & - 
+  \centering
+  \begin{tabular}{l | l | l | l | l | l}
+  LSN & LAST\_LSN & TRAN\_ID & TYPE & PAGE\_ID  & UNDO\_NEXT \\ \hline
+  1 & - & - & begin CKPT & - & -\\
+  2 & - & - & end CKPT & - & -\\
+  3 & NULL & T1 & update & P2 & -\\
+  4 & 3 & T1 & update & P1 & -\\
+  5 & NULL & T2 & update & P5 & -\\
+  6 & NULL & T3 & update & P3 & -\\
+  7 & 6 & T3 & commit & - & -\\
+  8 & 5 & T2 & update & P5 & -\\
+  9 & 8 T2 & update & P3 & -\\
+  10 & 6 & T3 & end & - & -\\
+  11 & - & T2 & CLR & P3 & 8 \\
+  12 & - & T2 & CLR & P5 & 5 \\
+  13 & - & T2 & CLR & P5 & NULL\\
+  14 & - & T2 & end & - & - \\
+  15 & - & T1 & CLR & P1 & 3 \\
+  16 & - & T1 & CLR & P2 & NULL \\
+  17 & - & T1 & end & - & - 
     
   \end{tabular}
   \caption{The log after the recovery procedure completes}
