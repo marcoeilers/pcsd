@@ -232,8 +232,7 @@ Explain the effects you observe regarding throughput and latency of your service
 
 \subsection*{Question 6}
 \label{sec:pq6}
-
-Briefly describe how you implemented group commit in KeyValueBase. (1 paragraph)
+I create a list within the loop in the run method of my logger. Each time a new LogRequest is polled from the queue, it is put in this list. If the list now has size $k$, I iterate over the list and first write all the requested log entries, then flush the log, and then set the status of all the Futures to done. Then I clear the list again. However, I have also specified a timeout: Whenever no new request is put in the queue for the specified time, I force the current contents of the list (if any) to disk immediately. This means that the maximum time a single request can wait is \emph{not} the timeout that is specified. Instead, whenever there is a gap of more than <timeout> seconds between two new incoming log requests, all current requests are forced to disk. There may, however, be a time close to <timeout> between the first and the second element that is in the list, and between the second and the third, up to the $k$th element. The resulting maximum waiting time for a single request is therefore $(k-1)\times timeout$. In order to prevent the store from blocking during the initialization, $k$ is initially set to 1 (which is identical to the situation without group commit). Only after the store has been initialized is it set to $k$. The default setting for $k$ is 1, since this makes testing much easier and faster.
 
 
 

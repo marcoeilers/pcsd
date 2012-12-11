@@ -91,6 +91,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 			initializing = true;
 
 			if (serverFilename.equals("")) {
+				logger.setGroupSize(groupCommitSize);
 				initialized = true;
 				initializing = false;
 				return;
