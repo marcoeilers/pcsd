@@ -1,12 +1,15 @@
 package dk.diku.pcsd.assignment1.impl;
 
+import java.io.Serializable;
+
 import dk.diku.pcsd.keyvaluebase.interfaces.Pair;
 
 /**
  * Implementation of a key-value-pair.
  *
  */
-public class PairImpl extends Pair<KeyImpl, ValueListImpl> {
+public class PairImpl extends Pair<KeyImpl, ValueListImpl> implements Serializable {
+	private static final long serialVersionUID = -3033908062149596015L;
 
 	public PairImpl(){
 		super();

@@ -52,10 +52,10 @@ public class LoggerImpl implements Logger {
 					for (LogRequest lr : reqs) {
 						log(lr.getRecord());
 					}
+					oos.flush();
 					for (LogRequest lr : reqs) {
 						lr.getFuture().signalAll(Boolean.TRUE);
 					}
-					oos.flush();
 					reqs.clear();
 				}
 

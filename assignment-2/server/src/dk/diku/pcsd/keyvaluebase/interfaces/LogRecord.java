@@ -3,6 +3,7 @@ package dk.diku.pcsd.keyvaluebase.interfaces;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * 
@@ -57,10 +58,18 @@ public class LogRecord implements Serializable {
 
 		Class<?>[] params = new Class<?>[this.numberParam];
 		for (int i=0; i<this.numberParam; i++)
-			params[i] = this.params[i].getClass();
+			params[i] = contains(this.params[i].getClass().getInterfaces(), List.class)?List.class : this.params[i].getClass();
 		
 		Method m =  this.className.getMethod(methodName, params);
 		return m.invoke(src, this.params);
 	}	
+	
+	private boolean contains(Object[] list, Object o){
+		for (int i = 0; i<list.length; i++){
+			if (list[i].equals(o))
+				return true;
+		}
+		return false;
+	}
 	
 }

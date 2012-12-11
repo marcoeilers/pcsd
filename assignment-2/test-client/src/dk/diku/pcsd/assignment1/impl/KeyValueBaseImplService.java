@@ -27,8 +27,8 @@ public interface KeyValueBaseImplService {
     /**
      * 
      * @param arg0
-     * @throws ServiceAlreadyInitializedException_Exception
      * @throws FileNotFoundException_Exception
+     * @throws ServiceAlreadyInitializedException_Exception
      * @throws ServiceInitializingException_Exception
      */
     @WebMethod
@@ -60,8 +60,8 @@ public interface KeyValueBaseImplService {
      * @param arg1
      * @param arg0
      * @throws ServiceNotInitializedException_Exception
-     * @throws KeyAlreadyPresentException_Exception
      * @throws IOException_Exception
+     * @throws KeyAlreadyPresentException_Exception
      */
     @WebMethod
     @RequestWrapper(localName = "insert", targetNamespace = "http://impl.assignment1.pcsd.diku.dk/", className = "dk.diku.pcsd.assignment1.impl.Insert")
@@ -79,8 +79,8 @@ public interface KeyValueBaseImplService {
      * @param arg1
      * @param arg0
      * @throws ServiceNotInitializedException_Exception
-     * @throws IOException_Exception
      * @throws KeyNotFoundException_Exception
+     * @throws IOException_Exception
      */
     @WebMethod
     @RequestWrapper(localName = "update", targetNamespace = "http://impl.assignment1.pcsd.diku.dk/", className = "dk.diku.pcsd.assignment1.impl.Update")
@@ -99,8 +99,8 @@ public interface KeyValueBaseImplService {
      * @return
      *     returns dk.diku.pcsd.assignment1.impl.ValueListImpl
      * @throws ServiceNotInitializedException_Exception
-     * @throws IOException_Exception
      * @throws KeyNotFoundException_Exception
+     * @throws IOException_Exception
      */
     @WebMethod
     @WebResult(targetNamespace = "")
@@ -120,8 +120,8 @@ public interface KeyValueBaseImplService {
      * @return
      *     returns java.util.List<dk.diku.pcsd.assignment1.impl.ValueListImpl>
      * @throws ServiceNotInitializedException_Exception
-     * @throws IOException_Exception
      * @throws BeginGreaterThanEndException_Exception
+     * @throws IOException_Exception
      */
     @WebMethod
     @WebResult(targetNamespace = "")
@@ -145,8 +145,8 @@ public interface KeyValueBaseImplService {
      * @return
      *     returns java.util.List<dk.diku.pcsd.assignment1.impl.ValueListImpl>
      * @throws ServiceNotInitializedException_Exception
-     * @throws IOException_Exception
      * @throws BeginGreaterThanEndException_Exception
+     * @throws IOException_Exception
      */
     @WebMethod
     @WebResult(targetNamespace = "")

@@ -8,6 +8,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -18,6 +20,8 @@ import dk.diku.pcsd.assignment1.impl.KeyImpl;
 import dk.diku.pcsd.assignment1.impl.KeyNotFoundException_Exception;
 import dk.diku.pcsd.assignment1.impl.KeyValueBaseImplService;
 import dk.diku.pcsd.assignment1.impl.KeyValueBaseImplServiceService;
+import dk.diku.pcsd.assignment1.impl.Pair;
+import dk.diku.pcsd.assignment1.impl.PairImpl;
 import dk.diku.pcsd.assignment1.impl.ServiceAlreadyInitializedException_Exception;
 import dk.diku.pcsd.assignment1.impl.ServiceInitializingException_Exception;
 import dk.diku.pcsd.assignment1.impl.ServiceNotInitializedException_Exception;
@@ -58,7 +62,7 @@ public class BasicRecoveryTest {
 		KeyValueBaseImplService kvbis = getWebService();
 		
 		try {
-			kvbis.init(null);
+			kvbis.init("");
 			
 			KeyImpl insertKey = new KeyImpl();
 			insertKey.setKey("newKey1");
@@ -224,6 +228,35 @@ public class BasicRecoveryTest {
 			ValueImpl v3 = new ValueImpl();
 			v3.setValue("insertedValue");
 			vl3.getValueList().add(v3);
+			
+			List<Pair> pairs = new ArrayList<Pair>();
+			
+			KeyImpl bulkKey = new KeyImpl();
+			bulkKey.setKey("bulk1");
+
+			ValueListImpl bvall = new ValueListImpl();
+			ValueImpl bval = new ValueImpl();
+			bval.setValue("bulkVal1");
+			bvall.getValueList().add(bval);
+			
+			PairImpl p = new PairImpl();
+			p.setKey(bulkKey);
+			p.setValue(bvall);
+			
+			KeyImpl bulkKey2 = new KeyImpl();
+			bulkKey2.setKey("bulk2");
+
+			ValueListImpl bvall2 = new ValueListImpl();
+			ValueImpl bval2 = new ValueImpl();
+			bval2.setValue("bulkVal2");
+			bvall2.getValueList().add(bval2);
+			
+			PairImpl p2 = new PairImpl();
+			p2.setKey(bulkKey2);
+			p2.setValue(bvall2);
+			
+			pairs.add(p);	
+			pairs.add(p2);
 
 			kvbis.insert(insertKey, vl1);
 
@@ -234,6 +267,8 @@ public class BasicRecoveryTest {
 			kvbis.delete(key18);
 
 			kvbis.insert(insertKey2, vl3);
+			
+			kvbis.bulkPut(pairs);
 
 			Thread.sleep(sleepTime);
 			
@@ -253,6 +288,8 @@ public class BasicRecoveryTest {
 					.getValue());
 			assertEquals("insertedValue", kvbis2.read(insertKey2)
 					.getValueList().get(0).getValue());
+			assertEquals("bulkVal1", kvbis2.read(bulkKey)
+					.getValueList().get(0).getValue());
 
 			try {
 				kvbis2.read(key18);
@@ -268,6 +305,7 @@ public class BasicRecoveryTest {
 			fail();
 			e1.printStackTrace();
 		} catch (KeyNotFoundException_Exception e1) {
+			e1.printStackTrace();
 			fail();
 		} catch (ServiceNotInitializedException_Exception e1) {
 			fail();
