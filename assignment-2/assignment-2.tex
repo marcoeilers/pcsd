@@ -184,13 +184,13 @@ TODO
   8 & 5 & T2 & update & P5 & -\\
   9 & 8 T2 & update & P3 & -\\
   10 & 6 & T3 & end & - & -\\
-  11 & - & T2 & CLR & P3 & 8 \\
-  12 & - & T2 & CLR & P5 & 5 \\
-  13 & - & T2 & CLR & P5 & NULL\\
-  14 & - & T2 & end & - & - \\
-  15 & - & T1 & CLR & P1 & 3 \\
-  16 & - & T1 & CLR & P2 & NULL \\
-  17 & - & T1 & end & - & - 
+  11 & 8 & T2 & CLR & P3 & 8 \\
+  12 & 11 & T2 & CLR & P5 & 5 \\
+  13 & 12 & T2 & CLR & P5 & NULL\\
+  14 & 13 & T2 & end & - & - \\
+  15 & 4 & T1 & CLR & P1 & 3 \\
+  16 & 15 & T1 & CLR & P2 & NULL \\
+  17 & 16 & T1 & end & - & - 
     
   \end{tabular}
   \caption{The log after the recovery procedure completes}
@@ -219,11 +219,10 @@ There are a few additional unit tests that check, for example, if calling init a
 
 \subsection*{Question 4}
 \label{sec:pq4}
-Explain how you can quantify the overhead of log-based durability in both throughput and
-latency. Design and describe your experimental setup to quantify this overhead. Recall that you must
-document all parameters that may influence the performance of the system (e.g., e.g., number of clients,
-hardware characteristics, size of dataset managed, mix of operations).
 
+An experiment to measure the overhead of logging should only consist of actions that are actually logged, which is why any such experiment should contain no or few reads. It would therefore make sense to first initialize the server (which should not count for the measured time), then insert for example 500 key-value-pairs, then perform 2000 updates, then 500 deletes (since I believe updates are the most common operation in practice). Since I expect the overhead to be relatively low, these operations should use simple, small values like short strings, because otherwise the overhead for serializing and deserializing the data will have a much bigger influence than the time needed for logging. The logger works sequentially, which means that the overhead might be bigger if several requests are worked on simultaneously. Therefore I will perform the task described above with one to four threads at once and compare the results. The client should create a protocol detailing the time needed for each request (to get the latency), as well as the time needed for running all of the requests (so I can compute the throughput). Then the same test should be run on the same server with logging deactivated for comparison.
+
+I will use two virtual machines from Microsoft Azure to perform the tests. The server has 4 cores, 7GB RAM and runs Ubuntu 12.04, the client has two cores, 3.5 GB RAM and runs Windows 2012 Server.
 
 \subsection*{Question 5}
 \label{sec:pq5}

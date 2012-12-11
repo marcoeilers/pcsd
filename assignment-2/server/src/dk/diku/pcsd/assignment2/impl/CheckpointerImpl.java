@@ -45,7 +45,7 @@ public class CheckpointerImpl implements Checkpointer {
 				oos.close();
 				logger.truncate();
 				if (KeyValueBaseImpl.initialized){
-					logger.logRequest(new LogRecord(KeyValueBaseImplService.class, "init", new Object[]{null}));
+					logger.logRequest(new LogRecord(KeyValueBaseImplService.class, "init", new Object[]{""}));
 				}
 				log.resume();
 			} catch (InterruptedException e) {

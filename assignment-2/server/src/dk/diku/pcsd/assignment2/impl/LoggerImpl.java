@@ -21,6 +21,8 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Logger;
 public class LoggerImpl implements Logger {
 	private static LoggerImpl instance;
 
+	private int k = 1;
+
 	public static LoggerImpl getInstance() {
 		if (instance == null) {
 			instance = new LoggerImpl();
@@ -39,12 +41,23 @@ public class LoggerImpl implements Logger {
 	@Override
 	public void run() {
 		// log all requests
+		ArrayList<LogRequest> reqs = new ArrayList<LogRequest>();
 		while (true) {
 			try {
-				LogRequest current = requests.poll(Long.MAX_VALUE,
-						TimeUnit.DAYS);
-				log(current.getRecord());
-				current.getFuture().signalAll(Boolean.TRUE);
+				LogRequest current = requests.poll(10L,
+						TimeUnit.SECONDS);
+				if (current != null)
+					reqs.add(current);
+				if (reqs.size() == k || current == null) {
+					for (LogRequest lr : reqs) {
+						log(lr.getRecord());
+					}
+					for (LogRequest lr : reqs) {
+						lr.getFuture().signalAll(Boolean.TRUE);
+					}
+					oos.flush();
+					reqs.clear();
+				}
 
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -64,7 +77,6 @@ public class LoggerImpl implements Logger {
 
 	private void log(LogRecord record) throws IOException {
 		oos.writeObject(record);
-		oos.flush();
 	}
 
 	private LoggerImpl() {
@@ -75,7 +87,7 @@ public class LoggerImpl implements Logger {
 
 		File logFile = new File(logPath);
 		logExisted = logFile.exists();
-		
+
 		try {
 			fos = new FileOutputStream(logPath, true);
 			oos = new ObjectOutputStream(fos);
@@ -85,8 +97,8 @@ public class LoggerImpl implements Logger {
 			e1.printStackTrace();
 		}
 	}
-	
-	public boolean hasLog(){
+
+	public boolean hasLog() {
 		return logExisted;
 	}
 
@@ -104,7 +116,7 @@ public class LoggerImpl implements Logger {
 					}
 				} catch (Exception e) {
 					break;
-				} 
+				}
 			ois.close();
 
 		} catch (FileNotFoundException e) {
@@ -118,9 +130,9 @@ public class LoggerImpl implements Logger {
 		return result;
 
 	}
-	
-	public void truncate(){
-		
+
+	public void truncate() {
+
 		try {
 			oos.close();
 			fos = new FileOutputStream(logPath, false);
@@ -132,9 +144,13 @@ public class LoggerImpl implements Logger {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
+	public void setGroupSize(int k) {
+		this.k = k;
+	}
+
 	@Override
 	protected void finalize() throws Throwable {
 		oos.close();

@@ -34,6 +34,8 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 	protected IndexImpl index;
 	protected LoggerImpl logger;
+	protected final int groupCommitSize = 1;
+	
 	public static boolean initialized = false, initializing = false;
 
 	private boolean logging = true;
@@ -51,12 +53,12 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 
 	/**
 	 * Initializes the store using the specified file, which must have the
-	 * format specified in the assignment text. If the provided fileName is
-	 * null, just initializes an empty store. Must be used before other
+	 * format specified in the assignment text. If the provided fileName is an
+	 * empty string, just initializes an empty store. Must be used before other
 	 * operations on the store are used, can only be used once.
 	 * 
-	 * The filename has to be specified relative to the computer's temp
-	 * directory as specified by java.io.tmpdir.
+	 * The filename has to be specified relative to the user's home directory as
+	 * specified by user.home.
 	 */
 	public void init(String serverFilename)
 			throws ServiceAlreadyInitializedException,
@@ -72,7 +74,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 				throw new ServiceInitializingException();
 			initializing = true;
 
-			if (serverFilename == null) {
+			if (serverFilename.equals("")) {
 				initialized = true;
 				initializing = false;
 				return;
@@ -130,9 +132,10 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 				}
 
 				br.close();
-
+				logger.setGroupSize(groupCommitSize);
 				initialized = true;
 				initializing = false;
+				
 			} catch (IOException e) {
 				// Throw a FileNotFoundException instead.
 				throw new FileNotFoundException(e.getMessage());
