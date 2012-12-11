@@ -45,11 +45,10 @@ public class StoreImpl implements Store {
 			tmpDir += File.separator;
 
 		// versioning of the store
-		String mmfPath = tmpDir + File.separator + "store.mmf";
+		String mmfPath = tmpDir + "store.mmf";
 		File mmfFile = new File(mmfPath);
 
 		try {
-			// always create new file
 			if (overwrite) {
 				if (mmfFile.exists())
 					mmfFile.delete();
@@ -58,9 +57,6 @@ public class StoreImpl implements Store {
 				mmfRandomAccessFile = new RandomAccessFile(mmfPath, "rw");
 				mmfRandomAccessFile.setLength(MMF_SIZE);
 
-				// initialize the memory mapped file with either the old file or
-				// the
-				// newly created one
 			} else {
 				mmfRandomAccessFile = new RandomAccessFile(mmfPath, "rw");
 			}
@@ -73,7 +69,7 @@ public class StoreImpl implements Store {
 
 	@Override
 	protected void finalize() throws Throwable {
-		// close the raf on garbace collection
+		// close the raf on garbage collection
 		mmfRandomAccessFile.close();
 		super.finalize();
 	}

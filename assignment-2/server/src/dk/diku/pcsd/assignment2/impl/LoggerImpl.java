@@ -93,7 +93,6 @@ public class LoggerImpl implements Logger {
 	public List<LogRecord> getLogEntries() {
 		ObjectInputStream ois;
 		List<LogRecord> result = new ArrayList<LogRecord>();
-		System.out.println("getting log entries");
 		try {
 			ois = new ObjectInputStream(new FileInputStream(logPath));
 
@@ -102,7 +101,6 @@ public class LoggerImpl implements Logger {
 					Object current = ois.readObject();
 					if (current instanceof LogRecord) {
 						result.add((LogRecord) current);
-						System.out.println("current is "+((LogRecord)current).getMethodName());
 					}
 				} catch (Exception e) {
 					break;
