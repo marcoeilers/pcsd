@@ -34,13 +34,29 @@ import dk.diku.pcsd.keyvaluebase.interfaces.Predicate;
 public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 	protected IndexImpl index;
 	protected LoggerImpl logger;
-	protected final int groupCommitSize = 1;
-	
+	protected int groupCommitSize = 1;
+
 	public static boolean initialized = false, initializing = false;
 
 	private boolean logging = true;
 
 	public KeyValueBaseImpl() {
+		String userdir = System.getProperty("user.home");
+		if (!userdir.endsWith(File.separator))
+			userdir += File.separator;
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(userdir
+					+ "groupSize.txt"));
+
+			String size = br.readLine();
+			int s = Integer.parseInt(size);
+			this.groupCommitSize = s;
+			br.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		logger = LoggerImpl.getInstance();
 		KeyValueBaseLogImpl log = KeyValueBaseLogImpl.getInstance(logger);
 		CheckpointerImpl.createInstance(log, logger);
@@ -135,7 +151,7 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 				logger.setGroupSize(groupCommitSize);
 				initialized = true;
 				initializing = false;
-				
+
 			} catch (IOException e) {
 				// Throw a FileNotFoundException instead.
 				throw new FileNotFoundException(e.getMessage());

@@ -44,8 +44,7 @@ public class LoggerImpl implements Logger {
 		ArrayList<LogRequest> reqs = new ArrayList<LogRequest>();
 		while (true) {
 			try {
-				LogRequest current = requests.poll(10L,
-						TimeUnit.SECONDS);
+				LogRequest current = requests.poll(10L, TimeUnit.SECONDS);
 				if (current != null)
 					reqs.add(current);
 				if (reqs.size() == k || current == null) {
@@ -88,6 +87,11 @@ public class LoggerImpl implements Logger {
 		File logFile = new File(logPath);
 		logExisted = logFile.exists();
 
+		List<LogRecord> currentRecords = null;
+		if (logExisted) {
+			currentRecords = getLogEntries();
+		}
+
 		try {
 			fos = new FileOutputStream(logPath, true);
 			oos = new ObjectOutputStream(fos);
@@ -95,6 +99,17 @@ public class LoggerImpl implements Logger {
 			e1.printStackTrace();
 		} catch (IOException e1) {
 			e1.printStackTrace();
+		}
+		if (logExisted) {
+			try {
+				for (LogRecord lr : currentRecords) {
+					log(lr);
+				}
+				oos.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
