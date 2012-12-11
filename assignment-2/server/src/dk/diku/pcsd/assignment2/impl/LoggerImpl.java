@@ -93,7 +93,7 @@ public class LoggerImpl implements Logger {
 		}
 
 		try {
-			fos = new FileOutputStream(logPath, true);
+			fos = new FileOutputStream(logPath, false);
 			oos = new ObjectOutputStream(fos);
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
