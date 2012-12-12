@@ -18,6 +18,13 @@ import dk.diku.pcsd.keyvaluebase.interfaces.FutureLog;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Logger;
 
+/**
+ * Logs incoming requests. Runs in its own thread. A queue handles the
+ * transition of data between calling threads and the logger thread. Group
+ * commit is implemented, but disabled by default (i.e. k is set to 1).
+ * 
+ * Also provides methods for reading the contents of the log during recovery.
+ */
 public class LoggerImpl implements Logger {
 	private static LoggerImpl instance;
 

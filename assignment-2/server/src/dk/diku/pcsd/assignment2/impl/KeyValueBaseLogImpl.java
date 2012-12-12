@@ -11,17 +11,23 @@ import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseLog;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 import dk.diku.pcsd.keyvaluebase.interfaces.Logger;
 
-public class KeyValueBaseLogImpl implements KeyValueBaseLog<KeyImpl,ValueListImpl> {
+/**
+ * Quiesces and resumes the store, recovers data.
+ * 
+ * This is a singleton. Created once in the constructor of KeyValueBaseImpl.
+ */
+public class KeyValueBaseLogImpl implements
+		KeyValueBaseLog<KeyImpl, ValueListImpl> {
 	private LoggerImpl logger;
 	private static KeyValueBaseLogImpl instance;
-	
-	public static KeyValueBaseLogImpl getInstance(LoggerImpl logger){
-		if (instance == null){
+
+	public static KeyValueBaseLogImpl getInstance(LoggerImpl logger) {
+		if (instance == null) {
 			instance = new KeyValueBaseLogImpl(logger);
 		}
 		return instance;
 	}
-	
+
 	@Override
 	public void quiesce() {
 		MasterLock.getExclusiveLock().lock();
@@ -31,23 +37,28 @@ public class KeyValueBaseLogImpl implements KeyValueBaseLog<KeyImpl,ValueListImp
 	public void resume() {
 		MasterLock.getExclusiveLock().unlock();
 	}
-	
-	private KeyValueBaseLogImpl(LoggerImpl logger){
+
+	private KeyValueBaseLogImpl(LoggerImpl logger) {
 		this.logger = logger;
 	}
-	
-	public Logger getLogger(){
+
+	public Logger getLogger() {
 		return logger;
 	}
-	
-	public boolean recover(KeyValueBaseImpl kvb){
-		if (logger.hasLog()){
+
+	/**
+	 * If a log file is found, recreates the index (either by creating a new one
+	 * or by using the serialized copy, if any). Then redoes all operations in
+	 * the log (without logging them again).
+	 */
+	public boolean recover(KeyValueBaseImpl kvb) {
+		if (logger.hasLog()) {
 			IndexImpl.recreate();
 			kvb.setIndex(IndexImpl.getInstance());
-			
+
 			List<LogRecord> entries = logger.getLogEntries();
 			kvb.setLogging(false);
-			for (LogRecord rec : entries){
+			for (LogRecord rec : entries) {
 				try {
 					rec.invoke(kvb);
 				} catch (SecurityException e) {
@@ -64,10 +75,10 @@ public class KeyValueBaseLogImpl implements KeyValueBaseLog<KeyImpl,ValueListImp
 			}
 			kvb.setLogging(true);
 			return true;
-		}else{
+		} else {
 			return false;
 		}
-		
+
 	}
-	
+
 }

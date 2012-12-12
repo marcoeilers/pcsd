@@ -62,27 +62,28 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 		}
 		return instance;
 	}
-	
-	public static void recreate(){
+
+	/**
+	 * Recreates the index from a checkpoint, if available. Otherwise, simply
+	 * creates a new IndexImpl object.
+	 */
+	public static void recreate() {
 		String indexPath = System.getProperty("user.home");
 		if (!indexPath.endsWith(File.separator))
 			indexPath += File.separator;
 		indexPath += "kvindex.ind";
-		
+
 		ObjectInputStream ois = null;
 		try {
 			ois = new ObjectInputStream(new FileInputStream(indexPath));
 			Object oldIndex = ois.readObject();
-			if (oldIndex instanceof IndexImpl){
+			if (oldIndex instanceof IndexImpl) {
 				instance = (IndexImpl) oldIndex;
 				instance.reinitialize(StoreImpl.recreate());
-			}else{
+			} else {
 				System.out.println("Something went terribly wrong.");
 			}
-			
-			
-			
-			
+
 		} catch (FileNotFoundException e) {
 			instance = new IndexImpl();
 		} catch (IOException e) {
@@ -90,17 +91,21 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}finally{
+		} finally {
 			try {
 				ois.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		
+
 	}
-	
-	private void reinitialize(StoreImpl s){
+
+	/**
+	 * Reinitializes a recreated index by setting the new store and recreating
+	 * transient objects.
+	 */
+	private void reinitialize(StoreImpl s) {
 		this.store = s;
 		this.vs = new ValueSerializerImpl();
 		this.mappingsLock = new ReentrantReadWriteLock();
@@ -384,7 +389,8 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 	}
 
 	/**
-	 * Same functionality as scan, but atomic. Locks all keys in the store for read access. 
+	 * Same functionality as scan, but atomic. Locks all keys in the store for
+	 * read access.
 	 */
 	public List<ValueListImpl> atomicScan(KeyImpl begin, KeyImpl end)
 			throws BeginGreaterThanEndException, IOException {
@@ -424,8 +430,9 @@ public class IndexImpl implements Index<KeyImpl, ValueListImpl>, Serializable {
 	}
 
 	/**
-	 * Takes a list of key-value-pairs and inserts them into the store if the key does not exist, updated the value otherwise.
-	 * Atomic, so all keys that are to be manipulated are locked for write access throughout.
+	 * Takes a list of key-value-pairs and inserts them into the store if the
+	 * key does not exist, updated the value otherwise. Atomic, so all keys that
+	 * are to be manipulated are locked for write access throughout.
 	 * 
 	 * @see dk.diku.pcsd.keyvaluebase.interfaces.Index#bulkPut(java.util.List)
 	 */

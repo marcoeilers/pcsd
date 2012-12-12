@@ -41,6 +41,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 
 	private boolean logging = false;
 
+	/**
+	 * Recreates the current store if a log is found.
+	 */
 	public KeyValueBaseImpl() {
 		logger = LoggerImpl.getInstance();
 		KeyValueBaseLogImpl log = KeyValueBaseLogImpl.getInstance(logger);
