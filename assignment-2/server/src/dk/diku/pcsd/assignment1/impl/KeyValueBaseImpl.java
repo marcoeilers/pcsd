@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import dk.diku.pcsd.assignment2.impl.CheckpointerImpl;
@@ -38,25 +39,9 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 
 	public static boolean initialized = false, initializing = false;
 
-	private boolean logging = true;
+	private boolean logging = false;
 
 	public KeyValueBaseImpl() {
-		String userdir = System.getProperty("user.home");
-		if (!userdir.endsWith(File.separator))
-			userdir += File.separator;
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(userdir
-					+ "groupSize.txt"));
-
-			String size = br.readLine();
-			int s = Integer.parseInt(size);
-			this.groupCommitSize = s;
-			br.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 		logger = LoggerImpl.getInstance();
 		KeyValueBaseLogImpl log = KeyValueBaseLogImpl.getInstance(logger);
 		CheckpointerImpl.createInstance(log, logger);
@@ -291,16 +276,13 @@ public class KeyValueBaseImpl implements KeyValueBase<KeyImpl, ValueListImpl> {
 	}
 
 	private void waitFor(Future<?> f) {
-
-		while (!f.isDone()) {
-			try {
-				f.wait();
-			} catch (InterruptedException e) {
-			} catch (IllegalMonitorStateException e) {
-
-			}
+		try {
+			f.get();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
 		}
-
 	}
 
 	public void setIndex(IndexImpl i) {

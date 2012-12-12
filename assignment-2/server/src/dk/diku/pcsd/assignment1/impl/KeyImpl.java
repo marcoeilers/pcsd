@@ -75,6 +75,7 @@ public class KeyImpl implements Key<KeyImpl>, Serializable {
 			if (lock == null) {
 				ReadWriteLock newLock = new ReentrantReadWriteLock(true);
 				locks.put(key, newLock);
+				return newLock.readLock();
 			}
 			return locks.get(key).readLock();
 		}
@@ -93,6 +94,7 @@ public class KeyImpl implements Key<KeyImpl>, Serializable {
 			if (lock == null) {
 				ReadWriteLock newLock = new ReentrantReadWriteLock(true);
 				locks.put(key, newLock);
+				return newLock.writeLock();
 			}
 			return locks.get(key).writeLock();
 		}

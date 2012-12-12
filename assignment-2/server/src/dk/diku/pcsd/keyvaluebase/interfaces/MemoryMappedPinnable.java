@@ -6,29 +6,32 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 public class MemoryMappedPinnable extends MemoryMappedFile {
 	public static int developmentVersion = 1;
 
-	private Hashtable<PinnedRegion,byte[]> pinned_regions;
+	private LinkedHashMap<PinnedRegion,byte[]> pinned_regions;
 
 	public MemoryMappedPinnable(FileChannel channel, MapMode mode, int offset,
 			long totalSize) throws IndexOutOfBoundsException, IOException {
 
 		super(channel, mode, offset, totalSize);
 		
-		this.pinned_regions = new Hashtable<PinnedRegion,byte[]>();		
+		this.pinned_regions = new LinkedHashMap<PinnedRegion,byte[]>();		
 	}
 
 	public void flush () {
-		
-		Iterator<PinnedRegion> it = this.pinned_regions.keySet().iterator();
-		while(it.hasNext()) {
-			PinnedRegion p = it.next();
-			super.put(this.pinned_regions.get(p), p.getStartPosition());
+		synchronized (pinned_regions) {
+			Iterator<PinnedRegion> it = this.pinned_regions.keySet().iterator();
+			while(it.hasNext()) {
+				PinnedRegion p = it.next();
+				super.put(this.pinned_regions.get(p), p.getStartPosition());
+			}
+			
+			this.pinned_regions.clear();
 		}
 		
-		this.pinned_regions.clear();
 		
 		for (int i = 0; i< super.buffers.size();i++)
 			super.buffers.get(i).force();
@@ -40,16 +43,10 @@ public class MemoryMappedPinnable extends MemoryMappedFile {
 			throw new IndexOutOfBoundsException();
 		
 		PinnedRegion pR = new PinnedRegion(offset, src.length);
-		Iterator<PinnedRegion> it = this.pinned_regions.keySet().iterator();
-		while(it.hasNext()) {
-			if (pR.overlaps(it.next())) {
-				// throw new IndexOutOfBoundsException("Overlapping with another itnerval");
-				//FIXME ugly
-				it.remove();
-			}
-		}
 
-		this.pinned_regions.put(pR, src);
+		synchronized (pinned_regions) {
+			this.pinned_regions.put(pR, src);
+		}
 	}
 
 	public void unpin (long offset, int length) {

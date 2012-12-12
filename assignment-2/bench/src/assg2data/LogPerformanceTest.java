@@ -28,16 +28,23 @@ import dk.diku.pcsd.assignment1.impl.ValueImpl;
 import dk.diku.pcsd.assignment1.impl.ValueListImpl;
 
 public class LogPerformanceTest implements Callable<BenchmarkData> {
-	private int insertCount = 2000;
-	private int updateCount = 4000;
-	private int deleteCount = 1000;
+	private static  int insertCount = 5000;
+	private static int updateCount = 10000;
+	private static int deleteCount = 2500;
 
 	public static void main(String[] args) {
-		int h = Integer.parseInt(args[0]);
+		int h;
+		if (args.length > 0) {
+			h = Integer.parseInt(args[0]);
+			
+		} else {
+			h = 1;
+		}
+		// int h = 1;
+		
 		String userdir = System.getProperty("user.home");
 		if (!userdir.endsWith(File.separator))
 			userdir += File.separator;
-		// int h = 1;
 
 		PrintWriter bw = null;
 		try {
@@ -73,7 +80,7 @@ public class LogPerformanceTest implements Callable<BenchmarkData> {
 
 		List<BenchmarkData> res = new ArrayList<BenchmarkData>();
 
-		long before = System.currentTimeMillis();
+		long before = System.nanoTime();
 		try {
 			results = executor.invokeAll(threadList);
 		} catch (InterruptedException e) {
@@ -93,18 +100,21 @@ public class LogPerformanceTest implements Callable<BenchmarkData> {
 			}
 			res.add(result);
 		}
-		long after = System.currentTimeMillis();
+		
+		long after = System.nanoTime();
+		executor.shutdown();
 
-		bw.println("Had "+ h +" threads.");
-		bw.println("OverallLength: " + (after - before));
+		
+		
+
+		bw.println("Had " + h + " threads.");
+		bw.println("Had "+insertCount + " inserts, "+updateCount +" updates, "+deleteCount +" deletes.");
+		bw.println("AvgLength: " + (after - before));
 
 		for (BenchmarkData result : res) {
 			bw.println("" + result.getInsert() + "\t" + result.getUpdate()
 					+ "\t" + result.getDelete());
 		}
-
-		executor.shutdown();
-
 		bw.flush();
 
 	}
@@ -119,34 +129,35 @@ public class LogPerformanceTest implements Callable<BenchmarkData> {
 
 		Random rnd = new Random();
 
-		long before = System.currentTimeMillis();
+		long insertTime = 0L;
+		long inserts = 0;
+		
 		for (int i = 0; i < insertCount; i++) {
-			String newKey = "" + rnd.nextInt(10000000);
+			String newKey = "" + rnd.nextLong();
 			KeyImpl key = new KeyImpl();
 			key.setKey(newKey);
 
 			ValueListImpl newValList = new ValueListImpl();
 			ValueImpl newVal = new ValueImpl();
-			String newValStr = "" + rnd.nextInt(1000000);
+			String newValStr = "" + rnd.nextLong();
 			newVal.setValue(newValStr);
 			newValList.getValueList().add(newVal);
 
 			try {
+				long before = System.nanoTime();
 				kvbis.insert(key, newValList);
+				long after = System.nanoTime();
+				inserts++;
+				insertTime += (after - before);
 				mappings.put(key, newValList);
 				keys.add(key);
 			} catch (IOException_Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (KeyAlreadyPresentException_Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (ServiceNotInitializedException_Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
-		long afterInsert = System.currentTimeMillis();
+		long updateTime = 0L;
+		long updates = 0;
 
 		for (int i = 0; i < updateCount; i++) {
 			KeyImpl key = keys.get(rnd.nextInt(keys.size()));
@@ -158,7 +169,11 @@ public class LogPerformanceTest implements Callable<BenchmarkData> {
 			newValList.getValueList().add(newVal);
 
 			try {
+				long before = System.nanoTime();
 				kvbis.update(key, newValList);
+				long after = System.nanoTime();
+				updates++;
+				updateTime += (after - before);
 				mappings.put(key, newValList);
 			} catch (IOException_Exception e) {
 				// TODO Auto-generated catch block
@@ -171,13 +186,18 @@ public class LogPerformanceTest implements Callable<BenchmarkData> {
 				e.printStackTrace();
 			}
 		}
-		long afterUpdate = System.currentTimeMillis();
+		long deleteTime = 0L;
+		long deletes=0;
 
 		for (int i = 0; i < deleteCount; i++) {
 			KeyImpl key = keys.get(rnd.nextInt(keys.size()));
 
 			try {
+				long before = System.nanoTime();
 				kvbis.delete(key);
+				long after = System.nanoTime();
+				deleteTime += (after-before);
+				deletes++;
 				keys.remove(key);
 			} catch (KeyNotFoundException_Exception e) {
 				// TODO Auto-generated catch block
@@ -189,10 +209,8 @@ public class LogPerformanceTest implements Callable<BenchmarkData> {
 
 		}
 
-		long afterDelete = System.currentTimeMillis();
-
-		return new BenchmarkData((afterInsert - before),
-				(afterUpdate - afterInsert), (afterDelete - afterUpdate));
+		return new BenchmarkData(insertTime / inserts,
+				updateTime/updates, deleteTime / deletes);
 	}
 
 }

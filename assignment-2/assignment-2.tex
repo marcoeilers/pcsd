@@ -120,10 +120,6 @@ Both T1 and T2 complete before T3 begins its write phase, which means that we mu
 \subsection*{Question 3}
 \label{sec:eq3}
 
-(c) In a system that implements Write-Ahead Logging, which are the two situations in which the log
-tail must be forced to stable storage? Explain why log forces are necessary in these situations and
-argue why they are sufficient for durability.
-
 \subsubsection*{(a)}
 Such a system needs neither undo nor redo. Since all commited operations are immediately forced to nonvolatile or even stable storage, no such operations get lost in a crash and therefore we never have to redo them during the recovery process. Similarly, we also know that noncommitted changes only remain in volatile storage and are not written to disk until they are committed. This means that it is impossible for changes to land on disk until it is certain that they will stay there, and therefore we never need to undo any changes.
 
@@ -131,7 +127,11 @@ Such a system needs neither undo nor redo. Since all commited operations are imm
 The only thing we assume about nonvolatile storage is that the data in it does not automatically get lost during a crash or when the system is intentionally turned off or restarted. That makes it different from volatile storage, which is lost everytime the system is turned off in some way. However, nonvolatile storage may get lost if there are other (mechanical) failures, like a classical disk failure. With stable storage, we assume that this can never ever happen, and that everything that we store in it is guaranteed to remain there without any errors basically forever. In practice, it is nearly impossible to guarantee that, but one can get storage that can be considered "stable" for all practical purposes by using a lot of duplicate nonvolatile storage devices, possibly in different physical locations.
 
 \subsubsection*{(c)}
-TODO
+The main feature of write-ahead-logging is that before any change on a database object is written to disk, the respective log entry must be forced to stable storage as well. This is what guarantees that all changes that would survive a crash, i.e. changes on disk, are recorded in the log. More formally, this guarantees that $pageLSN \leq flushedLSN$. Without this requirement, updates which should be undone because their transaction did not commit before a crash could not always be undone, because the recovery process might not even know that they happened.
+
+The other situation is when a transaction commits. Since a committed transaction is supposed to be durable, it is necessary to ensure that its changes will, in fact, be preserved after a crash. If the changes are not yet forced to disk, this can be ensured by forcing the log up to the commit LSN to disk. Once this has happened, all of the transaction's changes will be redone during recovery and will therefore be permanent.
+
+Another situation might be the creation of a checkpoint. The reason why checkpoints are created is that they make sure not all operations that have ever been done on the database have to be undone or redone, and thus they limit recovery time. A checkpoint, however, is of no use if it gets lost in a crash, which is why it makes sense to always force it to disk. I do not think it is absolutely necessary to force the checkpoint record to disk, since if it is nor forced, the recovery algorithm might simply not know that a checkpoint was created and would have to base its recovery on the last checkpoint before the current one. Since checkpoints are mainly a way to reduce recovery times and it would be possible to make a database completely without them, this would not influence the database's capability to recover its state.
 
 
 \subsection*{Question 4}
@@ -201,12 +201,19 @@ TODO
 \section*{Programming} 
 \label{sec:programming}
 
+\subsection*{About my implementation}
+I devided to use my group's key value store from the first assignment as the basis for my new implementation. I also used the provided skeleton code, but only to a certain degree. I rely on Java's serialization mechanism exclusively and do not use the custom serialization mechanism in LogRecord. I adapted all relevant classes to implement Serializable. While their interfaces do not extend this interface (and therefore other implementations may not implement it either), the store is built around our implementation classes anyway, so if someone decided to use their own implementations for anything, the whole store would crash and burn, not only the logging mechanism. This was encouraged by the skeleton files for the first assignment, e.g. the skeleton for IndexImpl took KeyImpls and ValueListImpls as parameters throughout (instead of Keys and ValueLists), so don't blame me. ;-)
+
+I did not use the unpin mechanism at all. All data is written to the store using writePinned and subsequently flush. This means that between checkpoints, all updates are collected in RAM. This is not optimal in practice, but since we were also allowed to implement the entire store as a map in memory for this assignment, I assume it is acceptable. 
+
+When reading the discussion board on Absalon, I noticed that KeyValueBaseLogImpl was supposed to extend KeyValueBaseImpl. I didn't do this and don't feel like changing it, since my version also works. My KeyValueBaseLogImpl is now a singleton and does not extend anything else.
+
 \subsection*{Question 1}
 \label{sec:pq1}
 
 Both Logger and Checkpointer are threads that are started once at the beginning and continue to run as long as the web service is available. The Logger has a queue of log requests, which consist of a LogRecord and a Future. For each call of \texttt{logRequest}, a new Future is created. This future, along with the incoming LogRecord, is then put in said queue and the Future is returned immediately. The Logger thread polls the queue in an endless loop, and for every pair of LogRecord and Future it first writes (and forces) the LogRecord to disk (by simply serializing the LogRecord object) and then sets the Future's status to done. Any methods that manipulate the database therefore have to call logRequest and then wait until the returned Future's state is changed to done.
 
-The Checkpointer is also a thread running in an endless loop. It waits for a certain amount of time and then calls \texttt{quiesce} on KeyValueBaseLogImpl, another object that is created only once at the beginning. Quiesce is implemented via a MasterLock, another ReentrantReadWriteLock. All other operations now request a shared ("read") lock from this central component before they do anything else and return the lock when everything is done, which means that those operations can still run concurrently. \texttt{quiesce}, however, requests an exclusive ("write") lock, which means that as soon as this lock is acquired, all other operations can no longer get their read lock and have to wait. It is guaranteed that the function will get its write lock at some point (although it may take a while), since I use the fair scheduler. \texttt{resume} then simply releases the write lock again. Between those two function calls, the Checkpointer flushes the Store, writes the current Index to disk and truncates the log. If the key-value-store is currently initialized, it will also write an empty init operation (meaning a call to init that does not point to an initialization file) in the new log, so that during recovery the store knows whether it has already been initialized. This means that after recovery, the store will be intitialized if and only if it has been initialized before the crash.
+The Checkpointer is also a thread running in an endless loop. It waits for a certain amount of time and then calls \texttt{quiesce} on KeyValueBaseLogImpl, another object that is created only once at the beginning. Quiesce is implemented via a MasterLock, another ReentrantReadWriteLock. All other operations now request a shared ("read") lock from this central component before they do anything else and return the lock when everything is done, which means that those operations can still run concurrently. \texttt{quiesce}, however, requests an exclusive ("write") lock, which means that as soon as this lock is acquired, all other operations can no longer get their read lock and have to wait. It is guaranteed that the function will get its write lock at some point (although it may take a while), since I use the fair scheduler in the ReentrantReadWriteLock. \texttt{resume} then simply releases the write lock again. Between those two function calls, the Checkpointer flushes the Store, writes the current Index to disk and truncates the log. If the key-value-store is currently initialized, it will also write an empty init operation (meaning a call to init that does not point to an initialization file) in the new log, so that during recovery the store knows whether it has already been initialized. This means that after recovery, the store will be intitialized if and only if it has been initialized before the crash.
 
 When the server is started and it detects that a log file is present, it first deserializes the Index, updates it to use the MemoryMappedFile that is on disk, and then steps through the log file and re-invokes every method call that is recorded in it. A flag is set before this, so that REDOing these operations is not logged again.
 
@@ -220,28 +227,33 @@ There are a few additional unit tests that check, for example, if calling init a
 \subsection*{Question 4}
 \label{sec:pq4}
 
-An experiment to measure the overhead of logging should only consist of actions that are actually logged, which is why any such experiment should contain no or few reads. It would therefore make sense to first initialize the server (which should not count for the measured time), then insert for example 500 key-value-pairs, then perform 2000 updates, then 500 deletes (since I believe updates are the most common operation in practice). Since I expect the overhead to be relatively low, these operations should use simple, small values like short strings, because otherwise the overhead for serializing and deserializing the data will have a much bigger influence than the time needed for logging. The logger works sequentially, which means that the overhead might be bigger if several requests are worked on simultaneously. Therefore I will perform the task described above with one to four threads at once and compare the results. The client should create a protocol detailing the time needed for each request (to get the latency), as well as the time needed for running all of the requests (so I can compute the throughput). Then the same test should be run on the same server with logging deactivated for comparison.
+An experiment to measure the overhead of logging should only consist of actions that are actually logged, which is why any such experiment should contain no or few reads. It would therefore make sense to first initialize the server (which should not count for the measured time), then insert for example 5000 key-value-pairs, then perform 10000 updates, then 2500 deletes (since I believe updates are the most common operation in practice). Since I expect the overhead to be relatively low, these operations should use simple, small values like short strings, because otherwise the overhead for serializing and deserializing the data will have a much bigger influence than the time needed for logging. The logger works sequentially, which means that the overhead might be bigger if several requests are worked on simultaneously. Therefore I will perform the task described above with one to four threads at once and compare the results. The client should create a protocol detailing the time needed for each request (to get the latency), as well as the time needed for running all of the requests (so I can compute the throughput). Then the same test should be run on the same server with logging deactivated for comparison. Since quiescing the store would cause some measurements to be incomparable, no checkpoints should be created during the experiment. In order to get stable results, the experiment should be carried out three times and averages should be taken of all measured values.
 
-I will use two virtual machines from Microsoft Azure to perform the tests. The server has 4 cores, 7GB RAM and runs Ubuntu 12.04, the client has two cores, 3.5 GB RAM and runs Windows 2012 Server.
+I will use two virtual machines from Microsoft Azure to perform the tests. The server has 4 cores, 7GB RAM and runs Ubuntu 12.04, the client has two cores, 3.5 GB RAM and runs Windows 2012 Server. I have of no way of knowing the physical location of both machines, but I would not be surprised if they were actually in the same data centre.
 
 \subsection*{Question 5}
 \label{sec:pq5}
-Carry out the experiment you described in Question 4 and report your overhead results.
-Explain the effects you observe regarding throughput and latency of your service.
+\begin{figure}
+\centering
+  \includegraphics[width=0.8\textwidth]{latency}\\
+  \caption{Latency for an average request in nanoseconds}
+  \label{fig:latency}
+\end{figure}
+
+\begin{figure}
+\centering
+  \includegraphics[width=0.8\textwidth]{throughput}\\
+  \caption{Throughput in requests / millisecond}
+  \label{fig:throughput}
+\end{figure}
+
+See figure \ref{fig:latency} for a plot of the store's latency and figure \ref{fig:throughput} for its throughput for a specific number of client threads. The overall behaviour of both values is about as expected: The overall throughput rises if more client threads are added, until the server's hardware resources are utilized completely; from then on it goes down because of the added overhead of handling several requests at once. The latency stays about the same for one or two requests at a time, but rises for higher values, also because of the added overhead. Additonally, the gradient of the latency is about the opposite of that of the throughput.
+
+The overhead for logging seems to be relatively small in general. For one to three clients, throughput and latency are slightly worse if the server employs logging, but the overhead seems pretty acceptable. Throughout all tests, the average latency for a request with logging was only five percent higher than for a request without logging. The cost of serializing and transporting the data outweighs the cost of logging, and as a result the number of clients and the size of the values that are handled are more influential for the performance of the service as a whole than the question if logging is enabled. Funnily enough, for four clients, the store was actually faster on average when logging was enabled. I expected the opposite, and I still think that this measurement is a bit of a random outlier. However, the impact of several threads trying to log something at the same time (and three of them having to wait) seems to be lower than I expected, at least for only four clients. Overall, the overhead caused by logging seems marginal when compared with the benefits. 
 
 
 \subsection*{Question 6}
 \label{sec:pq6}
 I create a list within the loop in the run method of my logger. Each time a new LogRequest is polled from the queue, it is put in this list. If the list now has size $k$, I iterate over the list and first write all the requested log entries, then flush the log, and then set the status of all the Futures to done. Then I clear the list again. However, I have also specified a timeout: Whenever no new request is put in the queue for the specified time, I force the current contents of the list (if any) to disk immediately. This means that the maximum time a single request can wait is \emph{not} the timeout that is specified. Instead, whenever there is a gap of more than <timeout> seconds between two new incoming log requests, all current requests are forced to disk. There may, however, be a time close to <timeout> between the first and the second element that is in the list, and between the second and the third, up to the $k$th element. The resulting maximum waiting time for a single request is therefore $(k-1)\times timeout$. In order to prevent the store from blocking during the initialization, $k$ is initially set to 1 (which is identical to the situation without group commit). Only after the store has been initialized is it set to $k$. The default setting for $k$ is 1, since this makes testing much easier and faster.
-
-
-
- 
-\begin{thebibliography}{1}
-
-
-\end{thebibliography}
-
-
 
 \end{document}

@@ -27,9 +27,9 @@ public interface KeyValueBaseImplService {
     /**
      * 
      * @param arg0
-     * @throws ServiceInitializingException_Exception
-     * @throws FileNotFoundException_Exception
      * @throws ServiceAlreadyInitializedException_Exception
+     * @throws FileNotFoundException_Exception
+     * @throws ServiceInitializingException_Exception
      */
     @WebMethod
     @RequestWrapper(localName = "init", targetNamespace = "http://impl.assignment1.pcsd.diku.dk/", className = "dk.diku.pcsd.assignment1.impl.Init")
@@ -43,8 +43,8 @@ public interface KeyValueBaseImplService {
     /**
      * 
      * @param arg0
-     * @throws KeyNotFoundException_Exception
      * @throws ServiceNotInitializedException_Exception
+     * @throws KeyNotFoundException_Exception
      */
     @WebMethod
     @RequestWrapper(localName = "delete", targetNamespace = "http://impl.assignment1.pcsd.diku.dk/", className = "dk.diku.pcsd.assignment1.impl.Delete")
@@ -59,9 +59,9 @@ public interface KeyValueBaseImplService {
      * 
      * @param arg1
      * @param arg0
-     * @throws IOException_Exception
      * @throws ServiceNotInitializedException_Exception
      * @throws KeyAlreadyPresentException_Exception
+     * @throws IOException_Exception
      */
     @WebMethod
     @RequestWrapper(localName = "insert", targetNamespace = "http://impl.assignment1.pcsd.diku.dk/", className = "dk.diku.pcsd.assignment1.impl.Insert")
@@ -78,9 +78,9 @@ public interface KeyValueBaseImplService {
      * 
      * @param arg1
      * @param arg0
+     * @throws ServiceNotInitializedException_Exception
      * @throws IOException_Exception
      * @throws KeyNotFoundException_Exception
-     * @throws ServiceNotInitializedException_Exception
      */
     @WebMethod
     @RequestWrapper(localName = "update", targetNamespace = "http://impl.assignment1.pcsd.diku.dk/", className = "dk.diku.pcsd.assignment1.impl.Update")
@@ -98,9 +98,9 @@ public interface KeyValueBaseImplService {
      * @param arg0
      * @return
      *     returns dk.diku.pcsd.assignment1.impl.ValueListImpl
+     * @throws ServiceNotInitializedException_Exception
      * @throws IOException_Exception
      * @throws KeyNotFoundException_Exception
-     * @throws ServiceNotInitializedException_Exception
      */
     @WebMethod
     @WebResult(targetNamespace = "")
@@ -119,9 +119,9 @@ public interface KeyValueBaseImplService {
      * @param arg0
      * @return
      *     returns java.util.List<dk.diku.pcsd.assignment1.impl.ValueListImpl>
-     * @throws BeginGreaterThanEndException_Exception
-     * @throws IOException_Exception
      * @throws ServiceNotInitializedException_Exception
+     * @throws IOException_Exception
+     * @throws BeginGreaterThanEndException_Exception
      */
     @WebMethod
     @WebResult(targetNamespace = "")
@@ -144,9 +144,9 @@ public interface KeyValueBaseImplService {
      * @param arg0
      * @return
      *     returns java.util.List<dk.diku.pcsd.assignment1.impl.ValueListImpl>
-     * @throws BeginGreaterThanEndException_Exception
-     * @throws IOException_Exception
      * @throws ServiceNotInitializedException_Exception
+     * @throws IOException_Exception
+     * @throws BeginGreaterThanEndException_Exception
      */
     @WebMethod
     @WebResult(targetNamespace = "")
@@ -165,8 +165,8 @@ public interface KeyValueBaseImplService {
     /**
      * 
      * @param arg0
-     * @throws IOException_Exception
      * @throws ServiceNotInitializedException_Exception
+     * @throws IOException_Exception
      */
     @WebMethod
     @RequestWrapper(localName = "bulkPut", targetNamespace = "http://impl.assignment1.pcsd.diku.dk/", className = "dk.diku.pcsd.assignment1.impl.BulkPut")

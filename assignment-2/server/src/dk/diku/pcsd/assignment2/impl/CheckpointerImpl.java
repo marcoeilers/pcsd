@@ -17,7 +17,7 @@ import dk.diku.pcsd.keyvaluebase.interfaces.KeyValueBaseLog;
 import dk.diku.pcsd.keyvaluebase.interfaces.LogRecord;
 
 public class CheckpointerImpl implements Checkpointer {
-	private final long CHECKPOINT_PERIOD = 10000;
+	private final long CHECKPOINT_PERIOD = 10L;
 	private KeyValueBaseLog<KeyImpl, ValueListImpl> log;
 	private LoggerImpl logger;
 	private String indexPath;
