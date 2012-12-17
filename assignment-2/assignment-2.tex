@@ -142,7 +142,7 @@ Another situation might be the creation of a checkpoint. The reason why checkpoi
   \item Losers = $\{T1, T2\}$, Winners = $\{T3\}$
   \item The redo phase starts at LSN 3. The undo phase ends also at LSN 3. 
   \item RewriteRecords = $\{3,4,5,6,8,9\}$
-  \item UndoRecords = $\{8,5,4,3\}$
+  \item UndoRecords = $\{9,8,5,4,3\}$
   \item Log after the recovery procedure: see table \ref{tab:after}.
 \end{enumerate}
 
@@ -182,7 +182,7 @@ Another situation might be the creation of a checkpoint. The reason why checkpoi
   6 & NULL & T3 & update & P3 & -\\
   7 & 6 & T3 & commit & - & -\\
   8 & 5 & T2 & update & P5 & -\\
-  9 & 8 T2 & update & P3 & -\\
+  9 & 8 & T2 & update & P3 & -\\
   10 & 6 & T3 & end & - & -\\
   11 & 8 & T2 & CLR & P3 & 8 \\
   12 & 11 & T2 & CLR & P5 & 5 \\
@@ -248,6 +248,7 @@ I will use two virtual machines from Microsoft Azure to perform the tests. The s
 \end{figure}
 
 See figure \ref{fig:latency} for a plot of the store's latency and figure \ref{fig:throughput} for its throughput for a specific number of client threads. The overall behaviour of both values is about as expected: The overall throughput rises if more client threads are added, until the server's hardware resources are utilized completely; from then on it goes down because of the added overhead of handling several requests at once. The latency stays about the same for one or two requests at a time, but rises for higher values, also because of the added overhead. Additonally, the gradient of the latency is about the opposite of that of the throughput.
+
 
 The overhead for logging seems to be relatively small in general. For one to three clients, throughput and latency are slightly worse if the server employs logging, but the overhead seems pretty acceptable. Throughout all tests, the average latency for a request with logging was only five percent higher than for a request without logging. The cost of serializing and transporting the data outweighs the cost of logging, and as a result the number of clients and the size of the values that are handled are more influential for the performance of the service as a whole than the question if logging is enabled. Funnily enough, for four clients, the store was actually faster on average when logging was enabled. I expected the opposite, and I still think that this measurement is a bit of a random outlier. However, the impact of several threads trying to log something at the same time (and three of them having to wait) seems to be lower than I expected, at least for only four clients. Overall, the overhead caused by logging seems marginal when compared with the benefits. 
 
