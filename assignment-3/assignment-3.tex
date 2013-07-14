@@ -1,0 +1,242 @@
+\def\Module{Principles of Computer System Design}
+\def\Uebung{Assignment 3}
+\def\Studentenname{Marcus Voss (qcz284), Robert Schmidtke (rxt809), Marco Eilers (dbk726)}
+\def\Sub_date{08.01.2013}
+
+\documentclass[12pt,a4paper,fleqn]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fullpage} 
+\headsep1cm
+\parindent0cm
+\usepackage{amssymb, amstext, amsmath}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{hyperref}
+\usepackage{threeparttable}
+\usepackage{footnote}
+\usepackage{listings}
+\makesavenoteenv{tabular}
+
+\lhead{\textbf{\Module}}
+\rhead{\Uebung~(Submission: \Sub_date)}
+
+\cfoot{}
+\lfoot{\Studentenname}
+\rfoot{\thepage\ of \pageref{LastPage}}
+\pagestyle{fancy}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\newcommand{\code}[1]{{\fontfamily{fvm}\small \selectfont #1}}
+
+%Line spacing between paragraphs
+\setlength{\parskip}{6pt}
+
+
+\begin{document}
+
+\title{\Module\\\Uebung}
+\author{\Studentenname}
+\maketitle
+
+\section*{Exercises} 
+\label{sec:exercises}
+
+\subsection*{Question 1}
+\label{sec:eq1}
+
+\subsubsection*{(a)}
+
+If only asynchronous communication primitives are available, then the synchronisation must be implemented manually. This can be done by sending the message, and only continuing until a reply from the receiver of the message was received (an acknowledgement). This could even be taken further by that the sender then acknowledges even the reply (see e.g. three-way-handshake). An example pseudo-code implementation can be seen below:
+
+\begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
+Sender(){
+	//DO SOMETHING
+	Receiver rc = new Receiver();
+	
+	rc.sendMessage(Message msg, int msg_id);
+	Time startTime = System.currentTime();
+	while(True){
+		Message reply, int reply_id = rc.receiveMessage();
+		timeDiff = System.currentTime() - startTime;
+		if ((reply == "ok") AND (reply_id == msg_ID)) OR (timeDiff >= TIMEOUT){
+			//HANDLE THIS CASE
+			break;
+		}
+	}
+	//CONTINUE DOING SOMETHING
+}
+
+Receiver(){
+	Sender sr = new Sender();
+	while(True){
+	 	Message msg, int msg_id = sr.receiveMessage();
+	 	if msg.isFullyReceived(){
+			sr.sendMessage(new Message("ok"), msg_id);
+		} else {
+			sr.sendMessage(new Message("fail"), msg_id);
+		}
+	}
+}
+\end{lstlisting}
+
+
+\subsubsection*{(b)}
+
+If you have only synchronous primitives available, but want to implement asynchronous communication (between sender and receiver), then this can be achieved by having one (or more) proxies in between. Then the sender and receiver could communicate synchronously with their adjacent proxy, but between the sender and receiver there is an asynchronous communication. An example in pseudo-code is below, where the proxy is implemented through the function MessageBuffer():
+
+\begin{lstlisting}[basicstyle=\footnotesize,breaklines=true]
+Sender(){
+	//DO SOMETHING
+	MessageBuffer mb = new MessageBuffer();
+	Acknowledgement receiveAck = mb.sendMessage(Message msg);
+	receiveAck.wait();
+	//CONTINUE DOING SOMETHING
+}
+
+MessageBuffer(){
+	Receiver rc = new Receiver();
+	Sender sr = new Sender();
+	
+	while(True){
+		Message msg = sr.receiveMessage();
+		if (msg.isFullyReceived()){
+			receiveAck.notify();
+		}
+	}
+	
+	Acknowledgement sendAck = sr.sendMessage(Message msg);
+	sendAck.wait();
+}
+
+Receiver(){
+	MessageBuffer mb = new MessageBuffer();
+	while(True){
+		Message msg = mb.receiveMessage();
+		if (msg.isFullyReceived())
+			sendAck.notify();
+		}
+	}
+}
+\end{lstlisting}
+
+\subsubsection*{(c)}
+Persistent asynchronous communication could be implemented by having a message server. The sender would know the address of the message server and send the message to the message server (using the \texttt{put()} method). The message server would keep the message until the receiver retrieves the message by using the \texttt{get()} method. A simplified example API of such a message server is shown below:
+
+\begin{lstlisting}[basicstyle=\footnotesize,breaklines=true,mathescape]
+MessageServer(){
+    put(Message message)
+    get() $\longrightarrow$ Message
+    checkForNewMessages() $\longrightarrow$ int
+}
+\end{lstlisting}
+
+
+\subsection*{Question 2}
+\label{sec:eq2}
+\subsubsection*{Exokernel}
+
+Typical operating systems (OS) function as the interface between applications and physical resources and therefore limit the implementation freedom of applications by hiding physical details through providing different layers of abstraction. The end-to-end principle asks for high control over application specific decisions at the application level. By forcing constraints upon applications via the abstraction layers regular kernels (e.g. monolithic ones) violate the end-to-end principle. Exokernels are an alternate OS architecture that leave traditional OS abstraction such as resource management to the application (see \cite{Engler1995}). Exokernels therefore attempt to closer adhere to the end-to-end principle, as they allow applications more direct access to the hardware, thus forcing less abstraction upon the application. This design gives the application more freedom and and possibly more functionality, and it allows for improved performance (\cite{Engler1995} speaks of possible performance improvements up to 45\%). The downside is that by being less restrictive, applications for such a design are also more specific to a certain physical platform, as hardware abstraction layers are abandoned. More freedom for the applications also means more responsibilities, which, if certain things are not or badly handled do not lead to expected improvements.
+
+\subsubsection*{Encrypted data transmission}
+
+Encrypted data transmission trough a protocol such as SSL also follows the end-to-end principle in that application specific details are irrelevant (e.g. if an e-mail, web pages, files or voice-over-IP is transmitted), but does only provide the secure transmission for the application. Alternatively, the necessary steps such as key exchange, entity and message authentication, as well as encryption and decryption could be implemented at the application level. This would give all control over the cryptographic process to the application. In the case of the end-to-end argument one must trust that the lower level process works as expected and gives no opportunity to possible intruders, as the application gives the \emph{plain} data into underlying lower layer (see \cite{Saltzer1984}).
+
+\subsection*{Question 3}
+\label{sec:eq3}
+
+\subsubsection*{(a)}
+The probability that the daisy chain is connecting all buildings is 100\% minus twice the probability that one link fails and one is available, minus the probability that both fail, so: 
+\begin{align*}
+P_{Daisy} &= 1-2(1-p)p - p^2 = 1-2p + p^2 \\
+&= (1-p)^2
+\end{align*}
+
+\subsubsection*{(b)}
+The probability that the fully connected network is still connecting all buildings is 100\% minus the three cases that two links fail and only one is available, minus the probability that all three fail, so:
+\begin{align*}
+P_{Fully} &= 1-3(1-p)p^2 - p^3 \\
+&= 1 + 2p^3 - 3p^2
+\end{align*}
+
+\subsubsection*{(c)}
+We choose the offer that maximises the availability given the budget constraints. Using the formulas from above we get:
+\begin{align*}
+P_{Daisy} &= (1-0.000001)^2 \approx 0.999998 \\
+P_{Fully} &= 1 + 2p^3 - 3p^2 = 1 + 2(0.0001)^3-3(0.0001)^2 \approx 0.99999997 \\ 
+&\Rightarrow P_{Daisy} < P_{Fully}
+\end{align*}
+
+We hence choose the fully connected network.
+
+\subsection*{Question 4}
+\label{sec:eq4}
+
+The two-phase commit protocol (2PC) is a blocking protocol, because it blocks each node until a commit or roll-back is received. If for instance the coordinator fails after a participant sent an agreement, the participant will block (and with that keep any objects such as tables locked) until the coordinator is recovered and resumes the operation. Also if the coordinator waits for another participant to return an okay, but this participant fails, the coordinator would wait and all other participants would be left blocking (but this case could be resolved by implementing a time-out in the coordinator after that the coordinator sends an abort to the remaining participants). 
+
+The three-phase commit protocol (3PC) prevents delay due to blocking by introducing the extra step of sending the \emph{preCommit}. If the coordinator fails before sending the \emph{preCommit} (the participant is in the "uncertain" period), the participant will assume an abort after some time-out, will roll-back and can release all locks and continue with other transactions. In the 2PC that was not possible, as it could be the case that the coordinator already send a \emph{doCommit} to some participants, and then failed. If then the other participants implemented a time-out and aborted, the system would not be in a consistent state, as some nodes committed the transaction and others aborted it.
+
+\section*{Programming Task} 
+\label{sec:programming}
+
+\subsection*{Concerning our implementation}
+In order for recovery to work, slaves must be run on a different application server than the master, and the slave server has to be restarted \emph{before} the master server. For all other purposes, master, slave and proxy can also be run on the same server. Checkpoints and logs are stored in the directory stored in \texttt{java.io.tmpdir}. File names are constructed from the Tomcat's directory and the name of the application's war file, which is why moving or renaming either of those will prevent recovery from working.
+
+Because of some JAX-WS issues that we had earlier concerning running wsimport'ed code on a server that itself hat JAX-WS libraries, we had to resort to an older version of the JAX-WS libraries, which definitely works with the OpenJDK 6, but hopefully also with other Java versions. 
+
+Initialization files are searched in the \texttt{java.io.tmpdir} directory, meaning that the path to an initialization file has to be a relative path from said directory.
+
+\subsection*{Question 1}
+\label{sec:pq1}
+
+Our implementation of KeyValueBaseMaster is almost identical to the previous KeyValueBase; the only major addition is the replicator. Our master now keeps a list of all slave services, which is filled in the newly implemented config method. This method creates a slave web service proxy for every incoming wsdl location, but simply ignores the incoming master wsdl. For every log request, this list is traversed, and the relevant LogRecord is sent to every slave. Some more changes were necessary to enable our master to recover its configuration after a crash: the slave wsdl locations are now also logged, so that the master need not be reconfigured after recovering, and can apply all necessary updates to the clients as well. 
+
+The other major change was the addition of timestamps in the return types of the read methods. This behaviour is shared by both master and slaves and is therefore implemented in KeyValueBaseReplica, which both of them extend. Each replica keeps track of its most recent LSN: For the master, this is the LSN of the most recent update applied by a client; for the slaves, it is the LSN of the last update that was replicated from the master. In all read methods, the last LSN is simply returned along with the actual result.
+
+\subsection*{Question 2}
+\label{sec:pq2}
+Although the slaves offer only a subset of the service's operations, all of those operations must be available internally in order to replicate the updates coming in from the master. But some of KeyValueBase's functionality could still be removed from KeyValueBaseSlave: Since the master does all the logging, the slaves do not need their own logger. Neither do they have their own Checkpointer, although they do create their own checkpoints when told so by the master; since no independent scheduler is needed, this functionality is implemented right in the slave's logApply method.
+
+Like the master, the slaves inherit the added functionality for returning timestamps from KeyValueBaseReplica. The only other change  is the new method logApply. This method is called by the master whenever an update is logged, and the slave subsequently applies the same update by simply calling the invoke method of the incoming LogRecord. 
+
+\subsection*{Question 3}
+\label{sec:pq3}
+The proxy's function is mainly to forward requests to either the master or one of the slaves. For this purpose, it keeps track of a list of slave services and a single master service, which are initialized when config is called. Updates to the store and administrative functions like config are forwarded to the master, whose task it is to inform the slaves about the change. For reads, we use round robin scheduling, i.e. first each one of the slave's is used for an incoming request, then the master, and then we start again. We created a wrapper class called Replica to be able to use slaves and master alike without having to change generated code. In some places, where we could not reuse existing classes and had to use duplicates generated by wsimport (mainly exceptions), we also have to translate objects from one version of the class to another. 
+
+The proxy keeps track of the highest LSN it has so far received from any replica in a response to a request. For each subsequent request, the LSN of the new result is then compared to the current lastLSN: If it is lower, that means that the result might not reflect the most recent status of the store, and another replica is queried. If it is higher, lastLSN is updated to the new, higher value. 
+
+In case a request to one of the slaves times out, this slave is simply removed from the list. If a request to the master times out, the reference to the master service is set to null, and we don't use it any longer. Since we had to stick to the specified interface, the store will respond to new write requests by throwing RuntimeExceptions once the master is down. The same happens for read requests when no replica can be reached, or when the proxy is not yet configured.
+
+\subsection*{Question 4}
+\label{sec:pq4}
+For the sake of the question, we will assume that configurations are \emph{not} logged and restored, although the opposite is the case in our implementation. Instead, we assume that the configuration is fed to the proxies and the master in some way before startup, e.g. by placing the necessary information in a config file, which is then read by the server. We also assume that the time between two checkpoints is not a matter of minutes or seconds, but is actually long enough to do stuff inbetween.
+
+We devised a procedure that would keep read access to the store available at all times, but would prevent write access for a short time. 
+\begin{enumerate}
+  \item Set up and start the proxy or proxies on the new servers using the new configuration.
+  \item After a checkpoint has been made, start copying checkpoint data for both master and slaves to the new servers (i.e. serialized and flushed Index and Store).
+  \item As soon as the copying is done, start the new the slaves.
+  \item At some point, but before the next checkpoint is made, shut down the master. From now on, clients have only read access from the old proxies. \label{writestop}
+  \item Copy the old master's log to the new master server.
+  \item Start the new master with the new configuration, which should now begin the recovery process. \label{writestart}
+  \item Once the recovery process is done, create a redirect from the old proxies' URLs to the new ones. Clients can now use the full functionality of the service again. 
+  \item Shut down all remaining slaves and proxies on the old servers, they are no longer needed.
+\end{enumerate}
+
+There would only be read access between steps \ref{writestop} and \ref{writestart}, inclusive. We did not find a way to avoid this, since at some point the current state of the store needs to be frozen and copied. Copying only the log, instead of the entire memory mapped file, should shorten the time needed for this considerably.
+
+\begin{thebibliography}{1}
+
+\bibitem[Saltzer1984]{Saltzer1984} Saltzer, Jerome H., David P. Reed, and David D. Clark. "End-to-end arguments in system design." ACM Transactions on Computer Systems (TOCS) 2, no. 4 (1984): 277-288.
+
+\bibitem[Engler1995]{Engler1995} Engler, Dawson R., and M. Frans Kaashoek. "Exokernel: An operating system architecture for application-level resource management." In ACM SIGOPS Operating Systems Review, vol. 29, no. 5, pp. 251-266. ACM, 1995.
+
+\end{thebibliography}
+
+
+
+\end{document}
